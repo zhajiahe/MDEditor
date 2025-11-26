@@ -1,9 +1,11 @@
+
 import React, { useState } from 'react';
 import { 
   Bold, Italic, List, ListOrdered, Quote, Code, 
   Wand2, Download, FileText, FileCode, Printer, Columns, 
   PanelLeft, PanelRight, Type, Check, X,
-  Menu, Image as ImageIcon, Sparkles, Languages, Edit3, Settings, Sun, Moon
+  Menu, Image as ImageIcon, Sparkles, Languages, Edit3, Settings, Sun, Moon,
+  Command
 } from 'lucide-react';
 import { ViewMode, Theme, AIRequestOptions } from '../types';
 
@@ -19,6 +21,7 @@ interface ToolbarProps {
   theme: Theme;
   onToggleTheme: () => void;
   onOpenSettings: () => void;
+  onOpenCommandPalette: () => void;
 }
 
 export const Toolbar: React.FC<ToolbarProps> = ({ 
@@ -32,7 +35,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   isSidebarOpen,
   theme,
   onToggleTheme,
-  onOpenSettings
+  onOpenSettings,
+  onOpenCommandPalette
 }) => {
   const [showAIMenu, setShowAIMenu] = useState(false);
   const [customPrompt, setCustomPrompt] = useState('');
@@ -59,8 +63,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             )}
             
             <div className="flex items-center gap-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-1 transition-colors">
-                <ToolbarButton icon={Bold} label="Bold" onClick={() => onInsert('**', '**')} />
-                <ToolbarButton icon={Italic} label="Italic" onClick={() => onInsert('*', '*')} />
+                <ToolbarButton icon={Bold} label="Bold (Ctrl+B)" onClick={() => onInsert('**', '**')} />
+                <ToolbarButton icon={Italic} label="Italic (Ctrl+I)" onClick={() => onInsert('*', '*')} />
                 <ToolbarButton icon={List} label="Bullet List" onClick={() => onInsert('- ', '')} />
                 <ToolbarButton icon={ListOrdered} label="Numbered List" onClick={() => onInsert('1. ', '')} />
                 <ToolbarButton icon={Quote} label="Quote" onClick={() => onInsert('> ', '')} />
@@ -155,6 +159,13 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
             {/* App Settings */}
             <div className="flex items-center gap-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-1 transition-colors">
+                <button
+                    onClick={onOpenCommandPalette}
+                    className="hidden sm:flex p-1.5 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                    title="Command Palette (Ctrl+K)"
+                >
+                    <Command size={18} />
+                </button>
                 <button
                     onClick={onToggleTheme}
                     className="p-1.5 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"

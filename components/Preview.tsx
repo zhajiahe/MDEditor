@@ -1,3 +1,4 @@
+
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -7,6 +8,7 @@ import rehypeHighlight from 'rehype-highlight';
 import rehypeRaw from 'rehype-raw';
 import { MermaidDiagram } from './MermaidDiagram';
 import { Theme } from '../types';
+import { useDebounce } from '../hooks/useDebounce';
 
 interface PreviewProps {
   markdown: string;
@@ -16,6 +18,9 @@ interface PreviewProps {
 }
 
 export const Preview: React.FC<PreviewProps> = ({ markdown, scrollRef, onScroll, theme }) => {
+  // Debounce the markdown sent to the heavy renderers
+  const debouncedMarkdown = useDebounce(markdown, 300);
+
   return (
     <div 
       ref={scrollRef}
@@ -61,7 +66,7 @@ export const Preview: React.FC<PreviewProps> = ({ markdown, scrollRef, onScroll,
           h2: (props) => <h2 {...props} className="text-2xl font-bold mb-3 mt-6 text-gray-800 dark:text-white" />,
         }}
       >
-        {markdown}
+        {debouncedMarkdown}
       </ReactMarkdown>
     </div>
   );

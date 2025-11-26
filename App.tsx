@@ -1,9 +1,12 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Toolbar } from './components/Toolbar';
 import { Editor } from './components/Editor';
 import { Preview } from './components/Preview';
 import { Sidebar } from './components/Sidebar';
 import { SettingsModal } from './components/SettingsModal';
+import { StatusBar } from './components/StatusBar';
+import { CommandPalette } from './components/CommandPalette';
 import { ViewMode, AIRequestOptions, MarkdownDoc, Theme, AISettings } from './types';
 import { generateAIContent } from './services/geminiService';
 
@@ -69,10 +72,14 @@ function App() {
   });
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Split);
   const [isAILoading, setIsAILoading] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   
+  // Editor State for Status Bar
+  const [cursorPos, setCursorPos] = useState({ line: 1, col: 1 });
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
   const isScrolling = useRef(false);
@@ -101,6 +108,25 @@ function App() {
   useEffect(() => {
     localStorage.setItem('nebula-ai-settings', JSON.stringify(aiSettings));
   }, [aiSettings]);
+
+  // Global Keyboard Shortcuts
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      // Toggle Command Palette (Cmd/Ctrl + K)
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsCommandPaletteOpen(prev => !prev);
+      }
+      // Toggle Sidebar (Cmd/Ctrl + B) - Optional but common
+      if ((e.metaKey || e.ctrlKey) && e.key === 'b') {
+        e.preventDefault();
+        setIsSidebarOpen(prev => !prev);
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, []);
 
   // --- Document Management ---
   const handleUpdateContent = (newContent: string) => {
@@ -202,7 +228,6 @@ function App() {
       }, aiSettings);
 
       let newText = '';
-      // If summarizing or custom, often good to append instead of replace unless text is selected
       if (selection && type !== 'summarize' && type !== 'custom') {
         newText = text.substring(0, start) + result + text.substring(end);
       } else {
@@ -346,6 +371,7 @@ function App() {
           theme={theme}
           onToggleTheme={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
           onOpenSettings={() => setIsSettingsOpen(true)}
+          onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
         />
         
         <div className="flex-1 flex overflow-hidden relative">
@@ -356,6 +382,7 @@ function App() {
                 onChange={handleUpdateContent} 
                 textareaRef={textareaRef} 
                 onScroll={() => handleScroll('editor')}
+                setCursorPos={setCursorPos}
               />
             </div>
           )}
@@ -371,6 +398,8 @@ function App() {
             </div>
           )}
         </div>
+
+        <StatusBar text={activeDoc.content} cursorPos={cursorPos} />
       </div>
 
       <SettingsModal 
@@ -378,6 +407,18 @@ function App() {
         onClose={() => setIsSettingsOpen(false)} 
         settings={aiSettings}
         onSave={setAiSettings}
+      />
+
+      <CommandPalette 
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+        actions={{
+          setViewMode,
+          toggleTheme: () => setTheme(theme === 'dark' ? 'light' : 'dark'),
+          onExport: handleExport,
+          handleCreateDoc,
+          theme
+        }}
       />
     </div>
   );
