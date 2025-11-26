@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nebula Markdown</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            typography: {
+              DEFAULT: {
+                css: {
+                  maxWidth: 'none',
+                },
+              },
+            },
+          },
+        },
+      }
+    </script>
+    <!-- KaTeX for math rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous">
+    <!-- Highlight.js for code syntax highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <!-- html-docx-js for .docx export -->
+    <script src="https://cdn.jsdelivr.net/npm/html-docx-js@0.3.1/dist/html-docx.min.js"></script>
+    <style>
+      /* Custom Scrollbar for a sleeker look */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent; 
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #9ca3af; 
+        border-radius: 4px;
+      }
+      .dark ::-webkit-scrollbar-thumb {
+        background: #4b5563; 
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #6b7280; 
+      }
+      /* Print styles to hide UI */
+      @media print {
+        .no-print { display: none !important; }
+        .print-only { display: block !important; width: 100%; height: auto; overflow: visible; }
+        body { background: white; color: black; }
+        .markdown-body { padding: 0 !important; }
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.554.0",
+    "remark-gfm": "https://aistudiocdn.com/remark-gfm@^4.0.1",
+    "react-markdown": "https://aistudiocdn.com/react-markdown@^10.1.0",
+    "rehype-katex": "https://aistudiocdn.com/rehype-katex@^7.0.1",
+    "remark-math": "https://aistudiocdn.com/remark-math@^6.0.0",
+    "rehype-raw": "https://aistudiocdn.com/rehype-raw@^7.0.0",
+    "rehype-highlight": "https://aistudiocdn.com/rehype-highlight@^7.0.2",
+    "mermaid": "https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs"
+  }
+}
+</script>
+</head>
+  <body class="overflow-hidden bg-white dark:bg-gray-950 transition-colors duration-200">
+    <div id="root"></div>
+  </body>
+</html>
