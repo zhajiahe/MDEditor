@@ -34,3 +34,11 @@ export interface AISettings {
   apiKey?: string;
   model?: string;
 }
+
+export interface PrintSettings {
+  pageSize: 'a4' | 'letter' | 'legal';
+  orientation: 'portrait' | 'landscape';
+  margin: number; // in mm
+  scale: number; // percentage (100 = 1rem base font)
+  showPageNumbers: boolean;
+}

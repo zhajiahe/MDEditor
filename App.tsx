@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Toolbar } from './components/Toolbar';
 import { Editor } from './components/Editor';
@@ -7,7 +6,8 @@ import { Sidebar } from './components/Sidebar';
 import { SettingsModal } from './components/SettingsModal';
 import { StatusBar } from './components/StatusBar';
 import { CommandPalette } from './components/CommandPalette';
-import { ViewMode, AIRequestOptions, MarkdownDoc, Theme, AISettings } from './types';
+import { PrintPreviewModal } from './components/PrintPreviewModal';
+import { ViewMode, AIRequestOptions, MarkdownDoc, Theme, AISettings, PrintSettings } from './types';
 import { generateAIContent } from './services/geminiService';
 
 const DEFAULT_DOC_ID = 'default-doc';
@@ -73,6 +73,7 @@ function App() {
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Split);
   const [isAILoading, setIsAILoading] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -246,10 +247,47 @@ function App() {
     }
   };
 
+  // --- Print Handler ---
+  const handlePrint = (settings: PrintSettings) => {
+    // 1. Create a dynamic style tag for print metrics
+    let style = document.getElementById('nebula-print-style');
+    if (!style) {
+        style = document.createElement('style');
+        style.id = 'nebula-print-style';
+        document.head.appendChild(style);
+    }
+
+    // 2. Define the @page rules and body overrides
+    style.innerHTML = `
+      @page {
+        size: ${settings.pageSize} ${settings.orientation};
+        margin: ${settings.margin}mm;
+      }
+      @media print {
+        body {
+          font-size: ${settings.scale}%; 
+        }
+        /* Ensure preview component stretches correctly */
+        .markdown-body {
+           padding: 0 !important;
+           max-width: none !important;
+        }
+      }
+    `;
+
+    // 3. Close modal and trigger print
+    setIsPrintModalOpen(false);
+    
+    // Small delay to allow modal to close and styles to apply
+    setTimeout(() => {
+        window.print();
+    }, 300);
+  };
+
   // --- Export Handler ---
   const handleExport = (type: 'md' | 'html' | 'word' | 'pdf') => {
     if (type === 'pdf') {
-      window.print();
+      setIsPrintModalOpen(true);
       return;
     }
 
@@ -419,6 +457,14 @@ function App() {
           handleCreateDoc,
           theme
         }}
+      />
+
+      <PrintPreviewModal 
+        isOpen={isPrintModalOpen}
+        onClose={() => setIsPrintModalOpen(false)}
+        content={activeDoc.content}
+        theme={theme}
+        onPrint={handlePrint}
       />
     </div>
   );

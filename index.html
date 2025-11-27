@@ -46,19 +46,72 @@
       ::-webkit-scrollbar-thumb:hover {
         background: #6b7280; 
       }
+      
+      /* Page Break Styling */
+      .page-break {
+        page-break-after: always; /* Legacy */
+        break-after: page;
+        display: block;
+        height: 0;
+        border: none;
+      }
+      
+      /* Visual indicator in Preview (Screen only) */
+      @media screen {
+        .markdown-body .page-break {
+          height: auto;
+          margin: 2rem 0;
+          border-bottom: 2px dashed #e5e7eb; /* gray-200 */
+          position: relative;
+        }
+        
+        .dark .markdown-body .page-break {
+          border-bottom-color: #374151; /* gray-700 */
+        }
+
+        .markdown-body .page-break::after {
+          content: "PAGE BREAK";
+          position: absolute;
+          top: -10px;
+          right: 0;
+          background: #f3f4f6;
+          color: #9ca3af;
+          font-size: 10px;
+          font-weight: bold;
+          padding: 0 6px;
+          border-radius: 4px;
+        }
+        
+        .dark .markdown-body .page-break::after {
+          background: #1f2937;
+          color: #6b7280;
+        }
+      }
+
       /* Print styles to hide UI */
       @media print {
         .no-print { display: none !important; }
         .print-only { display: block !important; width: 100%; height: auto; overflow: visible; }
         body { background: white; color: black; }
+        /* Reset padding for the markdown body in print mode, as it's handled by @page */
         .markdown-body { padding: 0 !important; }
+        
+        /* Ensure page break works in print */
+        .page-break {
+           border: none !important;
+           margin: 0 !important;
+        }
+        .page-break::after {
+           display: none !important;
+        }
       }
     </style>
   <script type="importmap">
 {
   "imports": {
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
     "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react-dom": "https://aistudiocdn.com/react-dom@^19.2.0",
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
     "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
     "lucide-react": "https://aistudiocdn.com/lucide-react@^0.554.0",
@@ -68,7 +121,9 @@
     "remark-math": "https://aistudiocdn.com/remark-math@^6.0.0",
     "rehype-raw": "https://aistudiocdn.com/rehype-raw@^7.0.0",
     "rehype-highlight": "https://aistudiocdn.com/rehype-highlight@^7.0.2",
-    "mermaid": "https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs"
+    "mermaid": "https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs",
+    "highlight.js": "https://aistudiocdn.com/highlight.js@^11.9.0",
+    "katex": "https://aistudiocdn.com/katex@^0.16.9"
   }
 }
 </script>
