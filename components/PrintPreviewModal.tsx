@@ -51,11 +51,11 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="bg-white dark:bg-gray-900 w-[95vw] h-[90vh] rounded-xl shadow-2xl flex overflow-hidden border border-gray-200 dark:border-gray-700">
+      <div className="bg-white dark:bg-notion-bg w-[95vw] h-[90vh] rounded-xl shadow-2xl flex overflow-hidden border border-gray-200 dark:border-notion-border">
         
         {/* Left Sidebar: Controls */}
-        <div className="w-80 bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col shrink-0">
-          <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center">
+        <div className="w-80 bg-gray-50 dark:bg-notion-sidebar border-r border-gray-200 dark:border-notion-border flex flex-col shrink-0">
+          <div className="p-4 border-b border-gray-200 dark:border-notion-border flex justify-between items-center">
             <h2 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
               <Printer size={18} /> Print Setup
             </h2>
@@ -77,7 +77,7 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
                     className={`px-2 py-2 text-sm rounded border capitalize ${
                       settings.pageSize === size
                         ? 'bg-indigo-600 border-indigo-600 text-white'
-                        : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300'
+                        : 'bg-white dark:bg-notion-item border-gray-300 dark:border-notion-border text-gray-700 dark:text-gray-300'
                     }`}
                   >
                     {size}
@@ -95,7 +95,7 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
                   className={`flex items-center justify-center gap-2 px-3 py-2 text-sm rounded border ${
                     settings.orientation === 'portrait'
                       ? 'bg-indigo-600 border-indigo-600 text-white'
-                      : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300'
+                      : 'bg-white dark:bg-notion-item border-gray-300 dark:border-notion-border text-gray-700 dark:text-gray-300'
                   }`}
                 >
                   <Minimize size={14} className="rotate-90" /> Portrait
@@ -105,7 +105,7 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
                   className={`flex items-center justify-center gap-2 px-3 py-2 text-sm rounded border ${
                     settings.orientation === 'landscape'
                       ? 'bg-indigo-600 border-indigo-600 text-white'
-                      : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300'
+                      : 'bg-white dark:bg-notion-item border-gray-300 dark:border-notion-border text-gray-700 dark:text-gray-300'
                   }`}
                 >
                   <Maximize size={14} /> Landscape
@@ -128,7 +128,7 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
                 step="5"
                 value={settings.margin}
                 onChange={(e) => setSettings({ ...settings, margin: Number(e.target.value) })}
-                className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 accent-indigo-600"
+                className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-notion-item accent-indigo-600"
               />
             </div>
 
@@ -147,13 +147,13 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
                 step="5"
                 value={settings.scale}
                 onChange={(e) => setSettings({ ...settings, scale: Number(e.target.value) })}
-                className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 accent-indigo-600"
+                className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-notion-item accent-indigo-600"
               />
             </div>
 
           </div>
 
-          <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+          <div className="p-4 border-t border-gray-200 dark:border-notion-border bg-white dark:bg-notion-sidebar">
             <button
               onClick={() => onPrint(settings)}
               className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium shadow-md flex items-center justify-center gap-2 transition-colors"
@@ -164,7 +164,7 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
         </div>
 
         {/* Right Area: Preview Canvas */}
-        <div className="flex-1 bg-gray-100 dark:bg-gray-950 p-8 overflow-auto flex justify-center items-start">
+        <div className="flex-1 bg-gray-100 dark:bg-notion-item p-8 overflow-auto flex justify-center items-start">
           <div
             className="bg-white shadow-2xl transition-all duration-300 ease-in-out relative origin-top"
             style={{

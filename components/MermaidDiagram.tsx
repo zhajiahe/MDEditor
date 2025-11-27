@@ -81,7 +81,7 @@ export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ chart, theme = '
         <div className="opacity-80">{error}</div>
         <details className="mt-2">
            <summary className="cursor-pointer opacity-70 hover:opacity-100 select-none">Show Source</summary>
-           <pre className="mt-1 opacity-70 p-2 bg-white dark:bg-gray-900 rounded">{chart}</pre>
+           <pre className="mt-1 opacity-70 p-2 bg-white dark:bg-notion-item rounded">{chart}</pre>
         </details>
       </div>
     );
@@ -91,7 +91,7 @@ export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ chart, theme = '
 
   return (
     <div 
-      className="mermaid-container my-6 flex justify-center bg-white dark:bg-gray-900/50 p-4 rounded-lg border border-gray-100 dark:border-gray-800 overflow-x-auto shadow-sm transition-colors duration-200"
+      className="mermaid-container my-6 flex justify-center bg-white dark:bg-notion-item/50 p-4 rounded-lg border border-gray-100 dark:border-notion-border overflow-x-auto shadow-sm transition-colors duration-200"
       dangerouslySetInnerHTML={{ __html: svg }} 
     />
   );

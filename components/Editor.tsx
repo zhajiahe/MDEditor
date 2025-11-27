@@ -83,7 +83,7 @@ export const Editor: React.FC<EditorProps> = ({
 
   return (
     <div 
-        className="h-full w-full bg-white dark:bg-[#1e1e1e] relative group transition-colors duration-200"
+        className="h-full w-full bg-white dark:bg-notion-bg relative group transition-colors duration-200"
         onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
         onDragLeave={() => setIsDragOver(false)}
         onDrop={handleDrop}
@@ -97,13 +97,13 @@ export const Editor: React.FC<EditorProps> = ({
         onClick={(e) => updateCursorPos(e.currentTarget)}
         onPaste={handlePaste}
         onScroll={onScroll}
-        className="w-full h-full bg-white dark:bg-[#1e1e1e] text-gray-800 dark:text-gray-300 p-8 resize-none focus:outline-none font-mono text-sm leading-relaxed custom-scrollbar transition-colors duration-200"
+        className="w-full h-full bg-white dark:bg-notion-bg text-gray-800 dark:text-notion-text p-8 resize-none focus:outline-none font-mono text-sm leading-relaxed custom-scrollbar transition-colors duration-200 placeholder-gray-400 dark:placeholder-gray-600"
         placeholder="Start typing..."
         spellCheck={false}
       />
       {isDragOver && (
           <div className="absolute inset-0 bg-indigo-500/10 border-2 border-indigo-500 border-dashed m-4 rounded-xl flex items-center justify-center pointer-events-none">
-              <span className="text-indigo-600 dark:text-indigo-400 font-bold bg-white dark:bg-gray-900 px-4 py-2 rounded-lg shadow-sm">Drop image to insert</span>
+              <span className="text-indigo-600 dark:text-indigo-400 font-bold bg-white dark:bg-notion-sidebar px-4 py-2 rounded-lg shadow-sm">Drop image to insert</span>
           </div>
       )}
     </div>

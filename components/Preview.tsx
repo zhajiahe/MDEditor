@@ -34,7 +34,7 @@ export const Preview: React.FC<PreviewProps> = ({ markdown, scrollRef, onScroll,
     <div 
       ref={scrollRef}
       onScroll={onScroll}
-      className="markdown-body prose dark:prose-invert prose-blue max-w-none h-full overflow-auto p-8 bg-white dark:bg-gray-950 scroll-smooth transition-colors duration-200"
+      className="markdown-body prose dark:prose-invert prose-blue max-w-none h-full overflow-auto p-8 bg-white dark:bg-notion-bg scroll-smooth transition-colors duration-200 dark:text-notion-text"
     >
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}
@@ -55,7 +55,7 @@ export const Preview: React.FC<PreviewProps> = ({ markdown, scrollRef, onScroll,
                 {children}
               </code>
             ) : (
-              <code className="bg-gray-100 dark:bg-gray-800 text-red-500 dark:text-red-300 px-1 py-0.5 rounded text-sm font-mono" {...props}>
+              <code className="bg-gray-100 dark:bg-notion-item text-red-500 dark:text-red-300 px-1 py-0.5 rounded text-sm font-mono" {...props}>
                 {children}
               </code>
             );
@@ -70,15 +70,15 @@ export const Preview: React.FC<PreviewProps> = ({ markdown, scrollRef, onScroll,
             />
           ),
           table: (props) => (
-            <div className="overflow-x-auto my-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-              <table {...props} className="min-w-full divide-y divide-gray-200 dark:divide-gray-700" />
+            <div className="overflow-x-auto my-4 border border-gray-200 dark:border-notion-border rounded-lg">
+              <table {...props} className="min-w-full divide-y divide-gray-200 dark:divide-notion-border" />
             </div>
           ),
-          th: (props) => <th {...props} className="bg-gray-50 dark:bg-gray-800 px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider" />,
-          td: (props) => <td {...props} className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700" />,
+          th: (props) => <th {...props} className="bg-gray-50 dark:bg-notion-item px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider" />,
+          td: (props) => <td {...props} className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-notion-border" />,
           blockquote: (props) => <blockquote {...props} className="border-l-4 border-indigo-500 pl-4 italic text-gray-600 dark:text-gray-400 my-4" />,
           a: (props) => <a {...props} className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 underline decoration-indigo-500/30" target="_blank" rel="noopener noreferrer" />,
-          h1: (props) => <h1 {...props} className="text-3xl font-bold border-b border-gray-200 dark:border-gray-800 pb-2 mb-4 mt-8 text-gray-900 dark:text-white" />,
+          h1: (props) => <h1 {...props} className="text-3xl font-bold border-b border-gray-200 dark:border-notion-border pb-2 mb-4 mt-8 text-gray-900 dark:text-white" />,
           h2: (props) => <h2 {...props} className="text-2xl font-bold mb-3 mt-6 text-gray-800 dark:text-white" />,
         }}
       >

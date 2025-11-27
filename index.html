@@ -10,6 +10,18 @@
         darkMode: 'class',
         theme: {
           extend: {
+            colors: {
+              notion: {
+                bg: '#191919',       // Main content background
+                sidebar: '#202020',  // Sidebar/Toolbar background
+                hover: '#2C2C2C',    // Hover state
+                active: '#373737',   // Selected/Active state
+                border: '#2F2F2F',   // Borders
+                text: '#E3E3E3',     // Primary text
+                muted: '#9B9B9B',    // Secondary text
+                item: '#262626'      // Card/Item background
+              }
+            },
             typography: {
               DEFAULT: {
                 css: {
@@ -41,7 +53,7 @@
         border-radius: 4px;
       }
       .dark ::-webkit-scrollbar-thumb {
-        background: #4b5563; 
+        background: #373737; /* Notion Active Color for scrollbar */
       }
       ::-webkit-scrollbar-thumb:hover {
         background: #6b7280; 
@@ -66,7 +78,7 @@
         }
         
         .dark .markdown-body .page-break {
-          border-bottom-color: #374151; /* gray-700 */
+          border-bottom-color: #2F2F2F; /* Notion Border */
         }
 
         .markdown-body .page-break::after {
@@ -83,8 +95,8 @@
         }
         
         .dark .markdown-body .page-break::after {
-          background: #1f2937;
-          color: #6b7280;
+          background: #202020; /* Notion Sidebar */
+          color: #9B9B9B; /* Notion Muted */
         }
       }
 
@@ -128,7 +140,7 @@
 }
 </script>
 </head>
-  <body class="overflow-hidden bg-white dark:bg-gray-950 transition-colors duration-200">
+  <body class="overflow-hidden bg-white dark:bg-notion-bg transition-colors duration-200">
     <div id="root"></div>
   </body>
 </html>

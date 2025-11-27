@@ -30,8 +30,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="w-64 bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col h-full no-print shrink-0 transition-all duration-300">
-      <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+    <div className="w-64 bg-gray-50 dark:bg-notion-sidebar border-r border-gray-200 dark:border-notion-border flex flex-col h-full no-print shrink-0 transition-all duration-300">
+      <div className="p-4 border-b border-gray-200 dark:border-notion-border flex items-center justify-between">
         <h2 className="font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
           <Menu size={18} className="text-indigo-600 dark:text-indigo-400" /> Nebula
         </h2>
@@ -45,7 +45,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </button>
           <button 
             onClick={onToggle}
-            className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-800 rounded-md transition-colors"
+            className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-notion-hover rounded-md transition-colors"
             title="Close Sidebar"
           >
             <PanelLeftClose size={16} />
@@ -61,7 +61,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             placeholder="Search docs..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md py-1.5 pl-8 pr-3 text-sm text-gray-900 dark:text-gray-300 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+            className="w-full bg-white dark:bg-notion-bg border border-gray-200 dark:border-notion-border rounded-md py-1.5 pl-8 pr-3 text-sm text-gray-900 dark:text-notion-text focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
           />
         </div>
       </div>
@@ -73,15 +73,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
             onClick={() => onSelect(doc.id)}
             className={`group flex items-center justify-between px-3 py-2 rounded-md cursor-pointer transition-all ${
               doc.id === activeDocId 
-                ? 'bg-white dark:bg-gray-800 text-indigo-600 dark:text-indigo-300 border-l-2 border-indigo-500 shadow-sm dark:shadow-none' 
-                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-200 border-l-2 border-transparent'
+                ? 'bg-white dark:bg-notion-active text-indigo-600 dark:text-notion-text border-l-2 border-indigo-500 shadow-sm dark:shadow-none font-medium' 
+                : 'text-gray-600 dark:text-notion-muted hover:bg-gray-200 dark:hover:bg-notion-hover hover:text-gray-900 dark:hover:text-notion-text border-l-2 border-transparent'
             }`}
           >
             <div className="flex items-center gap-3 overflow-hidden">
               <FileText size={16} className="shrink-0" />
               <div className="truncate flex flex-col">
-                <span className="text-sm font-medium truncate w-32">{doc.title || 'Untitled'}</span>
-                <span className="text-[10px] text-gray-500 dark:text-gray-600">
+                <span className="text-sm truncate w-32">{doc.title || 'Untitled'}</span>
+                <span className="text-[10px] opacity-70">
                   {new Date(doc.lastModified).toLocaleDateString()}
                 </span>
               </div>
@@ -89,7 +89,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             
             <button
               onClick={(e) => { e.stopPropagation(); onDelete(doc.id); }}
-              className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-all"
+              className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-gray-200 dark:hover:bg-notion-hover rounded transition-all"
               title="Delete"
             >
               <Trash2 size={14} />

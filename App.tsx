@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Toolbar } from './components/Toolbar';
 import { Editor } from './components/Editor';
@@ -440,7 +439,7 @@ function App() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-200 overflow-hidden transition-colors duration-200">
+    <div className="flex h-screen bg-gray-50 dark:bg-notion-bg text-gray-900 dark:text-notion-text overflow-hidden transition-colors duration-200">
       
       {/* Hidden File Input for Image Upload */}
       <input 
@@ -480,7 +479,7 @@ function App() {
         
         <div className="flex-1 flex overflow-hidden relative">
           {(viewMode === ViewMode.Split || viewMode === ViewMode.Edit) && (
-            <div className={`${viewMode === ViewMode.Split ? 'w-1/2 border-r border-gray-200 dark:border-gray-800' : 'w-full'} h-full no-print`}>
+            <div className={`${viewMode === ViewMode.Split ? 'w-1/2 border-r border-gray-200 dark:border-notion-border' : 'w-full'} h-full no-print`}>
               <Editor 
                 value={activeDoc.content} 
                 onChange={handleUpdateContent} 
@@ -493,7 +492,7 @@ function App() {
           )}
 
           {(viewMode === ViewMode.Split || viewMode === ViewMode.Preview) && (
-            <div className={`${viewMode === ViewMode.Split ? 'w-1/2' : 'w-full'} h-full bg-white dark:bg-gray-950 print-only`}>
+            <div className={`${viewMode === ViewMode.Split ? 'w-1/2' : 'w-full'} h-full bg-white dark:bg-notion-bg print-only`}>
               <Preview 
                 markdown={activeDoc.content} 
                 scrollRef={previewRef}
