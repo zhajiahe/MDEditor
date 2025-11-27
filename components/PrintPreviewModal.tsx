@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X, Printer, Layout, Minimize, Maximize, Type } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { X, Printer, Layout, Minimize, Maximize, Type, Download } from 'lucide-react';
 import { PrintSettings, Theme } from '../types';
 import { Preview } from './Preview';
 
@@ -25,6 +25,8 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
     scale: 100, // 100%
     showPageNumbers: true
   });
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const printContentRef = useRef<HTMLDivElement>(null);
 
   if (!isOpen) return null;
 
@@ -48,6 +50,39 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
   };
 
   const dims = getPageDimensions();
+
+  const handleDownloadPdf = () => {
+    const element = printContentRef.current;
+    if (!element) return;
+
+    // @ts-ignore
+    if (typeof window.html2pdf === 'undefined') {
+        alert("PDF generator library is not loaded.");
+        return;
+    }
+
+    setIsGeneratingPdf(true);
+
+    const opt = {
+        margin: settings.margin, // Uses jsPDF units (mm)
+        filename: 'document.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+        jsPDF: { unit: 'mm', format: settings.pageSize, orientation: settings.orientation }
+    };
+
+    // @ts-ignore
+    window.html2pdf()
+        .set(opt)
+        .from(element)
+        .save()
+        .then(() => setIsGeneratingPdf(false))
+        .catch((err: any) => {
+            console.error(err);
+            setIsGeneratingPdf(false);
+            alert("Failed to generate PDF.");
+        });
+  };
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm">
@@ -153,12 +188,24 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
 
           </div>
 
-          <div className="p-4 border-t border-gray-200 dark:border-notion-border bg-white dark:bg-notion-sidebar">
+          <div className="p-4 border-t border-gray-200 dark:border-notion-border bg-white dark:bg-notion-sidebar space-y-2">
+            <button
+                onClick={handleDownloadPdf}
+                disabled={isGeneratingPdf}
+                className="w-full py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-notion-item dark:hover:bg-notion-hover text-gray-800 dark:text-white rounded-lg font-medium shadow-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+            >
+                {isGeneratingPdf ? (
+                    <span className="animate-spin h-4 w-4 border-2 border-gray-500 border-t-transparent rounded-full"></span>
+                ) : (
+                    <Download size={18} />
+                )}
+                {isGeneratingPdf ? "Generating..." : "Download PDF"}
+            </button>
             <button
               onClick={() => onPrint(settings)}
               className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium shadow-md flex items-center justify-center gap-2 transition-colors"
             >
-              <Printer size={18} /> Print / Save PDF
+              <Printer size={18} /> Print System Dialog
             </button>
           </div>
         </div>
@@ -171,15 +218,19 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
               width: `${dims.width}mm`,
               minHeight: `${dims.height}mm`,
               padding: `${settings.margin}mm`,
-              // We use a CSS variable for font size scaling in the preview
-              fontSize: `${settings.scale / 100}rem`,
             }}
           >
              {/* 
-                We render the Preview component, but we override styles via inline styles above and specific CSS 
-                that targets the print preview context 
+                We use the ref here to capture just the content content for html2pdf.
+                We apply the font size scaling directly here so it is preserved in the snapshot.
              */}
-             <div className={`prose max-w-none ${settings.scale < 80 ? 'prose-sm' : settings.scale > 120 ? 'prose-lg' : ''}`}>
+             <div 
+                ref={printContentRef}
+                className={`prose max-w-none ${settings.scale < 80 ? 'prose-sm' : settings.scale > 120 ? 'prose-lg' : ''}`}
+                style={{
+                    fontSize: `${settings.scale / 100}rem`,
+                }}
+             >
                 <Preview 
                   markdown={content} 
                   scrollRef={{ current: null }} // No scroll sync needed here
