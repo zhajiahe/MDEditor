@@ -1,6 +1,6 @@
 
 import React, { useRef, useState } from 'react';
-import { handleSmartKeyDown, compressImage } from '../utils/editorUtils';
+import { handleSmartKeyDown, compressImage, insertImageReference } from '../utils/editorUtils';
 
 interface EditorProps {
   value: string;
@@ -12,6 +12,7 @@ interface EditorProps {
 
 export const Editor: React.FC<EditorProps> = ({ value, onChange, textareaRef, onScroll, setCursorPos }) => {
   const [isDragOver, setIsDragOver] = useState(false);
+  const isProcessingPaste = useRef(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     onChange(e.target.value);
@@ -41,21 +42,40 @@ export const Editor: React.FC<EditorProps> = ({ value, onChange, textareaRef, on
 
   const handlePaste = async (e: React.ClipboardEvent) => {
     const items = e.clipboardData.items;
+    let hasImage = false;
+
+    // Check if there is an image to prevent default paste behavior if so
     for (let i = 0; i < items.length; i++) {
-      if (items[i].type.indexOf('image') !== -1) {
-        e.preventDefault();
-        const blob = items[i].getAsFile();
-        if (blob) {
-            try {
-                // Compress image before inserting
-                const base64 = await compressImage(blob);
-                insertImage(base64);
-            } catch (err) {
-                console.error("Image processing failed", err);
-                alert("Failed to process image.");
-            }
+        if (items[i].type.indexOf('image') !== -1) {
+            hasImage = true;
+            break;
         }
-      }
+    }
+
+    if (hasImage) {
+        e.preventDefault();
+        if (isProcessingPaste.current) return;
+        isProcessingPaste.current = true;
+        
+        try {
+            for (let i = 0; i < items.length; i++) {
+              if (items[i].type.indexOf('image') !== -1) {
+                const blob = items[i].getAsFile();
+                if (blob) {
+                    // Compress image before inserting
+                    const base64 = await compressImage(blob);
+                    insertImage(base64);
+                    // Only insert the first image to prevent spam/race conditions
+                    break; 
+                }
+              }
+            }
+        } catch (err) {
+            console.error("Image processing failed", err);
+            alert("Failed to process image.");
+        } finally {
+            isProcessingPaste.current = false;
+        }
     }
   };
 
@@ -80,18 +100,18 @@ export const Editor: React.FC<EditorProps> = ({ value, onChange, textareaRef, on
   const insertImage = (base64: string) => {
     if (!textareaRef.current) return;
     const textarea = textareaRef.current;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const text = textarea.value;
-    const before = text.substring(0, start);
-    const after = text.substring(end);
-    const imageMarkdown = `\n![Image](${base64})\n`;
     
-    onChange(before + imageMarkdown + after);
+    const { newContent, newCursorPos } = insertImageReference(
+        textarea.value,
+        base64,
+        textarea.selectionStart,
+        textarea.selectionEnd
+    );
+    
+    onChange(newContent);
     
     setTimeout(() => {
         textarea.focus();
-        const newCursorPos = start + imageMarkdown.length;
         textarea.setSelectionRange(newCursorPos, newCursorPos);
         updateCursorPos(textarea);
     }, 0);

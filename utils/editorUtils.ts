@@ -1,4 +1,6 @@
 
+import React from 'react';
+
 /**
  * Compresses an image file to a lower quality/resolution Base64 string.
  */
@@ -36,6 +38,45 @@ export const compressImage = (file: File, maxWidth = 1024, quality = 0.7): Promi
     };
     reader.onerror = (err) => reject(err);
   });
+};
+
+/**
+ * Inserts an image as a reference-style link to keep the editor clean.
+ * ![Alt Text][id] ... [id]: base64...
+ */
+export const insertImageReference = (
+  content: string,
+  base64: string,
+  cursorStart: number,
+  cursorEnd: number
+): { newContent: string; newCursorPos: number } => {
+  const timestamp = Date.now().toString(36);
+  const random = Math.random().toString(36).substring(2, 6);
+  const id = `image-${timestamp}-${random}`;
+  
+  const selection = content.substring(cursorStart, cursorEnd);
+  const altText = selection || 'Image';
+  
+  const refTag = `![${altText}][${id}]`;
+  const refDef = `[${id}]: ${base64}`;
+  
+  const before = content.substring(0, cursorStart);
+  const after = content.substring(cursorEnd);
+  
+  let newContent = before + refTag + after;
+  
+  // Ensure we append to a new line at the end of the document
+  if (!newContent.endsWith('\n')) {
+    newContent += '\n\n';
+  } else if (!newContent.endsWith('\n\n')) {
+    newContent += '\n';
+  }
+  
+  newContent += refDef;
+  
+  const newCursorPos = cursorStart + refTag.length;
+  
+  return { newContent, newCursorPos };
 };
 
 /**

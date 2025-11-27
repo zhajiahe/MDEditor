@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Toolbar } from './components/Toolbar';
 import { Editor } from './components/Editor';
@@ -9,6 +10,7 @@ import { CommandPalette } from './components/CommandPalette';
 import { PrintPreviewModal } from './components/PrintPreviewModal';
 import { ViewMode, AIRequestOptions, MarkdownDoc, Theme, AISettings, PrintSettings } from './types';
 import { generateAIContent } from './services/geminiService';
+import { compressImage, insertImageReference } from './utils/editorUtils';
 
 const DEFAULT_DOC_ID = 'default-doc';
 const WELCOME_CONTENT = `# Welcome to Nebula Markdown
@@ -83,6 +85,7 @@ function App() {
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const isScrolling = useRef(false);
 
   const activeDoc = documents.find(d => d.id === activeDocId) || documents[0];
@@ -207,6 +210,44 @@ function App() {
       textarea.focus();
       textarea.setSelectionRange(start + prefix.length, end + prefix.length);
     }, 0);
+  };
+
+  // --- Image Upload Handler ---
+  const handleImageUploadTrigger = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const base64 = await compressImage(file);
+      const textarea = textareaRef.current;
+      
+      if (textarea) {
+          const { newContent, newCursorPos } = insertImageReference(
+              activeDoc.content,
+              base64,
+              textarea.selectionStart,
+              textarea.selectionEnd
+          );
+          
+          handleUpdateContent(newContent);
+          
+          setTimeout(() => {
+            textarea.focus();
+            textarea.setSelectionRange(newCursorPos, newCursorPos);
+          }, 0);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to upload image. Please try another file.");
+    } finally {
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
   };
 
   // --- AI Handler ---
@@ -386,6 +427,15 @@ function App() {
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-200 overflow-hidden transition-colors duration-200">
       
+      {/* Hidden File Input for Image Upload */}
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        className="hidden" 
+        accept="image/*" 
+        onChange={handleImageFileChange}
+      />
+
       <Sidebar 
         documents={documents}
         activeDocId={activeDocId}
@@ -401,6 +451,7 @@ function App() {
           onInsert={handleInsert} 
           onAIAction={handleAIAction}
           onExport={handleExport}
+          onUploadImage={handleImageUploadTrigger}
           viewMode={viewMode}
           setViewMode={setViewMode}
           isAILoading={isAILoading}

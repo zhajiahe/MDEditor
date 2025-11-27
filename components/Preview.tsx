@@ -30,6 +30,7 @@ export const Preview: React.FC<PreviewProps> = ({ markdown, scrollRef, onScroll,
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}
         rehypePlugins={[rehypeRaw, rehypeKatex, rehypeHighlight]}
+        urlTransform={(url) => url}
         components={{
           code({ className, children, ...props }) {
             const match = /language-(\w+)/.exec(className || '');

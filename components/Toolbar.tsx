@@ -5,7 +5,7 @@ import {
   Wand2, Download, FileText, FileCode, Printer, Columns, 
   PanelLeft, PanelRight, Type, Check, X,
   Menu, Image as ImageIcon, Sparkles, Languages, Edit3, Settings, Sun, Moon,
-  Command, Scissors
+  Command, Scissors, ImagePlus
 } from 'lucide-react';
 import { ViewMode, Theme, AIRequestOptions } from '../types';
 
@@ -13,6 +13,7 @@ interface ToolbarProps {
   onInsert: (prefix: string, suffix: string) => void;
   onAIAction: (type: AIRequestOptions['type'], customPrompt?: string) => void;
   onExport: (type: 'md' | 'html' | 'word' | 'pdf') => void;
+  onUploadImage: () => void;
   viewMode: ViewMode;
   setViewMode: (mode: ViewMode) => void;
   isAILoading: boolean;
@@ -28,6 +29,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onInsert, 
   onAIAction, 
   onExport, 
+  onUploadImage,
   viewMode, 
   setViewMode,
   isAILoading,
@@ -69,7 +71,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 <ToolbarButton icon={ListOrdered} label="Numbered List" onClick={() => onInsert('1. ', '')} />
                 <ToolbarButton icon={Quote} label="Quote" onClick={() => onInsert('> ', '')} />
                 <ToolbarButton icon={Code} label="Code Block" onClick={() => onInsert('```\n', '\n```')} />
-                <ToolbarButton icon={ImageIcon} label="Image" onClick={() => onInsert('![Alt Text](', ')')} />
+                <ToolbarButton icon={ImageIcon} label="Link Image" onClick={() => onInsert('![Alt Text](', ')')} />
+                <ToolbarButton icon={ImagePlus} label="Upload Image" onClick={onUploadImage} />
                 <ToolbarButton icon={Scissors} label="Page Break" onClick={() => onInsert('\n<div class="page-break"></div>\n', '')} />
             </div>
         </div>
