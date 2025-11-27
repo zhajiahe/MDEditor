@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Toolbar } from './components/Toolbar';
 import { Editor } from './components/Editor';
@@ -5,8 +6,8 @@ import { Preview } from './components/Preview';
 import { Sidebar } from './components/Sidebar';
 import { SettingsModal } from './components/SettingsModal';
 import { StatusBar } from './components/StatusBar';
-import { CommandPalette } from './components/CommandPalette';
 import { PrintPreviewModal } from './components/PrintPreviewModal';
+import { HelpModal } from './components/HelpModal';
 import { ViewMode, AIRequestOptions, MarkdownDoc, Theme, AISettings, PrintSettings } from './types';
 import { generateAIContent } from './services/geminiService';
 import { compressImage } from './utils/editorUtils';
@@ -75,8 +76,8 @@ function App() {
   });
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Split);
   const [isAILoading, setIsAILoading] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -113,25 +114,6 @@ function App() {
   useEffect(() => {
     localStorage.setItem('nebula-ai-settings', JSON.stringify(aiSettings));
   }, [aiSettings]);
-
-  // Global Keyboard Shortcuts
-  useEffect(() => {
-    const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      // Toggle Command Palette (Cmd/Ctrl + K)
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        setIsCommandPaletteOpen(prev => !prev);
-      }
-      // Toggle Sidebar (Cmd/Ctrl + B) - Optional but common
-      if ((e.metaKey || e.ctrlKey) && e.key === 'b') {
-        e.preventDefault();
-        setIsSidebarOpen(prev => !prev);
-      }
-    };
-
-    window.addEventListener('keydown', handleGlobalKeyDown);
-    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, []);
 
   // --- Document Management ---
   const handleUpdateContent = (newContent: string) => {
@@ -493,7 +475,7 @@ function App() {
           theme={theme}
           onToggleTheme={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
           onOpenSettings={() => setIsSettingsOpen(true)}
-          onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+          onOpenHelp={() => setIsHelpOpen(true)}
         />
         
         <div className="flex-1 flex overflow-hidden relative">
@@ -533,24 +515,17 @@ function App() {
         onSave={setAiSettings}
       />
 
-      <CommandPalette 
-        isOpen={isCommandPaletteOpen}
-        onClose={() => setIsCommandPaletteOpen(false)}
-        actions={{
-          setViewMode,
-          toggleTheme: () => setTheme(theme === 'dark' ? 'light' : 'dark'),
-          onExport: handleExport,
-          handleCreateDoc,
-          theme
-        }}
-      />
-
       <PrintPreviewModal 
         isOpen={isPrintModalOpen}
         onClose={() => setIsPrintModalOpen(false)}
         content={activeDoc.content}
         theme={theme}
         onPrint={handlePrint}
+      />
+
+      <HelpModal 
+        isOpen={isHelpOpen}
+        onClose={() => setIsHelpOpen(false)}
       />
     </div>
   );

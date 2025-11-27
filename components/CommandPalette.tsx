@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Search, Command, FileText, Download, Moon, Sun, 
-  Split, PanelLeft, PanelRight, Sparkles, Plus 
+  Split, PanelLeft, PanelRight, Sparkles, Plus, CircleHelp
 } from 'lucide-react';
 import { ViewMode, Theme } from '../types';
 
@@ -14,6 +14,7 @@ interface CommandPaletteProps {
     toggleTheme: () => void;
     onExport: (type: 'md' | 'html' | 'word' | 'pdf') => void;
     handleCreateDoc: () => void;
+    onOpenHelp: () => void;
     theme: Theme;
   }
 }
@@ -42,6 +43,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
     { id: 'view-split', label: 'Split View', icon: Split, action: () => actions.setViewMode(ViewMode.Split), group: 'View' },
     { id: 'view-editor', label: 'Editor Only', icon: PanelLeft, action: () => actions.setViewMode(ViewMode.Edit), group: 'View' },
     { id: 'view-preview', label: 'Preview Only', icon: PanelRight, action: () => actions.setViewMode(ViewMode.Preview), group: 'View' },
+    { id: 'help', label: 'Open Help & Documentation', icon: CircleHelp, action: actions.onOpenHelp, group: 'Help' },
   ];
 
   const filteredCommands = commands.filter(cmd => 
@@ -102,11 +104,6 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
               setSelectedIndex(0);
             }}
           />
-          <div className="flex gap-1">
-             <kbd className="hidden sm:inline-flex h-5 items-center gap-1 rounded border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 px-1.5 font-mono text-[10px] font-medium text-gray-500 dark:text-gray-400">
-                <span className="text-xs">Esc</span>
-            </kbd>
-          </div>
         </div>
 
         <div className="max-h-[300px] overflow-y-auto custom-scrollbar p-2">
