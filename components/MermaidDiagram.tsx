@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from 'react';
 import mermaid from 'mermaid';
 import { Theme } from '../types';
@@ -28,47 +27,49 @@ export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ chart, theme = '
   }, []);
 
   useEffect(() => {
-    const renderChart = async () => {
-      // 1. Basic validation
-      if (!chart || chart.trim().length === 0) {
-        if (mountRef.current) {
-             setSvg('');
-             setError(null);
+    // Wrapping the render call in a timeout ensures that the DOM and styles 
+    // (especially from Tailwind's typography/prose) are fully settled before 
+    // Mermaid attempts to measure the container. This fixes the "Could not find a suitable point" error.
+    const timeoutId = setTimeout(async () => {
+        if (!chart || chart.trim().length === 0) {
+            if (mountRef.current) {
+                setSvg('');
+                setError(null);
+            }
+            return;
         }
-        return;
-      }
 
-      try {
-        // 2. Configure for current theme
-        // Note: mermaid.initialize merges options.
-        mermaid.initialize({
-          startOnLoad: false,
-          theme: theme === 'dark' ? 'dark' : 'default',
-          securityLevel: 'loose',
-        });
+        try {
+            // Configure for current theme
+            // Note: mermaid.initialize merges options.
+            mermaid.initialize({
+                startOnLoad: false,
+                theme: theme === 'dark' ? 'dark' : 'default',
+                securityLevel: 'loose',
+                fontFamily: 'inherit',
+            });
 
-        // 3. Render
-        // Generate a unique ID to prevent collisions in the DOM during calculation
-        const id = `mermaid-${Math.random().toString(36).substr(2, 9)}`;
-        
-        // mermaid.render returns a promise resolving to { svg }
-        const { svg } = await mermaid.render(id, chart);
-        
-        if (mountRef.current) {
-          setSvg(svg);
-          setError(null);
+            // Generate a clean ID (letters only) to avoid CSS selector issues in Dagre/Mermaid
+            const id = `mermaid${Math.random().toString(36).substr(2, 9).replace(/[^a-z]/g, '')}`;
+            
+            // mermaid.render returns a promise resolving to { svg }
+            const { svg } = await mermaid.render(id, chart);
+            
+            if (mountRef.current) {
+                setSvg(svg);
+                setError(null);
+            }
+        } catch (err) {
+            console.error('Mermaid Rendering Failed:', err);
+            if (mountRef.current) {
+                // Provide a generic error message as the specific "Could not find a suitable point" 
+                // is often internal to the layout engine (dagre) and confusing to users.
+                setError('Syntax Error or Layout Failure');
+            }
         }
-      } catch (err) {
-        console.error('Mermaid Rendering Failed:', err);
-        if (mountRef.current) {
-          // Provide a generic error message as the specific "Could not find a suitable point" 
-          // is often internal to the layout engine (dagre) and confusing to users.
-          setError('Syntax Error or Layout Failure');
-        }
-      }
-    };
+    }, 0);
 
-    renderChart();
+    return () => clearTimeout(timeoutId);
   }, [chart, theme]);
 
   if (error) {

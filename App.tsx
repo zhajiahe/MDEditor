@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Toolbar } from './components/Toolbar';
 import { Editor } from './components/Editor';
@@ -10,7 +9,7 @@ import { CommandPalette } from './components/CommandPalette';
 import { PrintPreviewModal } from './components/PrintPreviewModal';
 import { ViewMode, AIRequestOptions, MarkdownDoc, Theme, AISettings, PrintSettings } from './types';
 import { generateAIContent } from './services/geminiService';
-import { compressImage, insertImageReference } from './utils/editorUtils';
+import { compressImage } from './utils/editorUtils';
 
 const DEFAULT_DOC_ID = 'default-doc';
 const WELCOME_CONTENT = `# Welcome to Nebula Markdown
@@ -43,14 +42,16 @@ function App() {
         id: DEFAULT_DOC_ID,
         title: 'Welcome Note',
         content: WELCOME_CONTENT,
-        lastModified: Date.now()
+        lastModified: Date.now(),
+        attachments: {}
       }];
     } catch {
       return [{
         id: DEFAULT_DOC_ID,
         title: 'Welcome Note',
         content: WELCOME_CONTENT,
-        lastModified: Date.now()
+        lastModified: Date.now(),
+        attachments: {}
       }];
     }
   });
@@ -149,7 +150,8 @@ function App() {
       id: crypto.randomUUID(),
       title: 'New Document',
       content: '',
-      lastModified: Date.now()
+      lastModified: Date.now(),
+      attachments: {}
     };
     setDocuments([newDoc, ...documents]);
     setActiveDocId(newDoc.id);
@@ -212,42 +214,53 @@ function App() {
     }, 0);
   };
 
-  // --- Image Upload Handler ---
+  // --- Image Handling ---
+  const handleImageUpload = async (file: File) => {
+    try {
+      const base64 = await compressImage(file);
+      const id = `img-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+      
+      // 1. Update Document Attachments
+      setDocuments(docs => docs.map(doc => {
+        if (doc.id === activeDocId) {
+          return {
+            ...doc,
+            attachments: { ...(doc.attachments || {}), [id]: base64 },
+            lastModified: Date.now()
+          };
+        }
+        return doc;
+      }));
+
+      // 2. Insert Clean Reference into Editor
+      // If we have a selection, use it as alt text, otherwise default to "Image"
+      const textarea = textareaRef.current;
+      if (textarea) {
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const selection = textarea.value.substring(start, end);
+        const altText = selection || 'Image';
+        const tag = `![${altText}](attachment:${id})`;
+        
+        handleInsert(tag, '');
+      }
+
+    } catch (err) {
+      console.error(err);
+      alert("Failed to process image.");
+    }
+  };
+
   const handleImageUploadTrigger = () => {
     fileInputRef.current?.click();
   };
 
-  const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      const base64 = await compressImage(file);
-      const textarea = textareaRef.current;
-      
-      if (textarea) {
-          const { newContent, newCursorPos } = insertImageReference(
-              activeDoc.content,
-              base64,
-              textarea.selectionStart,
-              textarea.selectionEnd
-          );
-          
-          handleUpdateContent(newContent);
-          
-          setTimeout(() => {
-            textarea.focus();
-            textarea.setSelectionRange(newCursorPos, newCursorPos);
-          }, 0);
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Failed to upload image. Please try another file.");
-    } finally {
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+    if (file) {
+      handleImageUpload(file);
     }
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   // --- AI Handler ---
@@ -415,7 +428,27 @@ function App() {
       return;
     }
 
-    const blob = new Blob([activeDoc.content], { type: 'text/markdown' });
+    // Export Markdown: Hydrate images as reference links at the bottom
+    let exportContent = activeDoc.content;
+    const attachments = activeDoc.attachments || {};
+    let references = '\n\n';
+    let hasRef = false;
+
+    // Replace ![alt](attachment:id) with ![alt][id] and append definition
+    exportContent = exportContent.replace(/!\[(.*?)\]\(attachment:([a-zA-Z0-9-]+)\)/g, (match, alt, id) => {
+        if (attachments[id]) {
+            hasRef = true;
+            references += `[${id}]: ${attachments[id]}\n`;
+            return `![${alt}][${id}]`;
+        }
+        return match;
+    });
+
+    if (hasRef) {
+        exportContent += references;
+    }
+
+    const blob = new Blob([exportContent], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -472,6 +505,7 @@ function App() {
                 textareaRef={textareaRef} 
                 onScroll={() => handleScroll('editor')}
                 setCursorPos={setCursorPos}
+                onImageUpload={handleImageUpload}
               />
             </div>
           )}
@@ -483,6 +517,7 @@ function App() {
                 scrollRef={previewRef}
                 onScroll={() => handleScroll('preview')}
                 theme={theme}
+                attachments={activeDoc.attachments}
               />
             </div>
           )}

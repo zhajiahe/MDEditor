@@ -1,6 +1,5 @@
-
 import React, { useRef, useState } from 'react';
-import { handleSmartKeyDown, compressImage, insertImageReference } from '../utils/editorUtils';
+import { handleSmartKeyDown } from '../utils/editorUtils';
 
 interface EditorProps {
   value: string;
@@ -8,11 +7,18 @@ interface EditorProps {
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
   onScroll?: () => void;
   setCursorPos: (pos: { line: number; col: number }) => void;
+  onImageUpload: (file: File) => void;
 }
 
-export const Editor: React.FC<EditorProps> = ({ value, onChange, textareaRef, onScroll, setCursorPos }) => {
+export const Editor: React.FC<EditorProps> = ({ 
+  value, 
+  onChange, 
+  textareaRef, 
+  onScroll, 
+  setCursorPos,
+  onImageUpload
+}) => {
   const [isDragOver, setIsDragOver] = useState(false);
-  const isProcessingPaste = useRef(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     onChange(e.target.value);
@@ -54,27 +60,10 @@ export const Editor: React.FC<EditorProps> = ({ value, onChange, textareaRef, on
 
     if (hasImage) {
         e.preventDefault();
-        if (isProcessingPaste.current) return;
-        isProcessingPaste.current = true;
-        
-        try {
-            for (let i = 0; i < items.length; i++) {
-              if (items[i].type.indexOf('image') !== -1) {
-                const blob = items[i].getAsFile();
-                if (blob) {
-                    // Compress image before inserting
-                    const base64 = await compressImage(blob);
-                    insertImage(base64);
-                    // Only insert the first image to prevent spam/race conditions
-                    break; 
-                }
-              }
-            }
-        } catch (err) {
-            console.error("Image processing failed", err);
-            alert("Failed to process image.");
-        } finally {
-            isProcessingPaste.current = false;
+        const item = Array.from(items).find(item => item.type.indexOf('image') !== -1);
+        const file = item?.getAsFile();
+        if (file) {
+            onImageUpload(file);
         }
     }
   };
@@ -87,34 +76,9 @@ export const Editor: React.FC<EditorProps> = ({ value, onChange, textareaRef, on
       if (items && items.length > 0) {
           const file = items[0];
           if (file.type.startsWith('image/')) {
-              try {
-                  const base64 = await compressImage(file);
-                  insertImage(base64);
-              } catch (err) {
-                  console.error("Image processing failed", err);
-              }
+              onImageUpload(file);
           }
       }
-  };
-
-  const insertImage = (base64: string) => {
-    if (!textareaRef.current) return;
-    const textarea = textareaRef.current;
-    
-    const { newContent, newCursorPos } = insertImageReference(
-        textarea.value,
-        base64,
-        textarea.selectionStart,
-        textarea.selectionEnd
-    );
-    
-    onChange(newContent);
-    
-    setTimeout(() => {
-        textarea.focus();
-        textarea.setSelectionRange(newCursorPos, newCursorPos);
-        updateCursorPos(textarea);
-    }, 0);
   };
 
   return (

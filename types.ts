@@ -24,6 +24,7 @@ export interface MarkdownDoc {
   title: string;
   content: string;
   lastModified: number;
+  attachments?: Record<string, string>; // id -> base64
 }
 
 export type Theme = 'light' | 'dark';

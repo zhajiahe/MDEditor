@@ -1,4 +1,3 @@
-
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -15,11 +14,21 @@ interface PreviewProps {
   scrollRef: React.RefObject<HTMLDivElement | null>;
   onScroll?: () => void;
   theme: Theme;
+  attachments?: Record<string, string>;
 }
 
-export const Preview: React.FC<PreviewProps> = ({ markdown, scrollRef, onScroll, theme }) => {
+export const Preview: React.FC<PreviewProps> = ({ markdown, scrollRef, onScroll, theme, attachments }) => {
   // Debounce the markdown sent to the heavy renderers
   const debouncedMarkdown = useDebounce(markdown, 300);
+
+  const resolveImageSrc = (src: string | undefined) => {
+    if (!src) return undefined;
+    if (src.startsWith('attachment:')) {
+      const id = src.split(':')[1];
+      return attachments?.[id] || src;
+    }
+    return src;
+  };
 
   return (
     <div 
@@ -52,7 +61,13 @@ export const Preview: React.FC<PreviewProps> = ({ markdown, scrollRef, onScroll,
             );
           },
           img: (props) => (
-            <img {...props} className="rounded-lg shadow-lg max-w-full h-auto my-4 mx-auto" alt={props.alt || 'Markdown Image'} loading="lazy" />
+            <img 
+              {...props} 
+              src={resolveImageSrc(props.src)}
+              className="rounded-lg shadow-lg max-w-full h-auto my-4 mx-auto" 
+              alt={props.alt || 'Markdown Image'} 
+              loading="lazy" 
+            />
           ),
           table: (props) => (
             <div className="overflow-x-auto my-4 border border-gray-200 dark:border-gray-700 rounded-lg">
