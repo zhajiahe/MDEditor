@@ -10,6 +10,8 @@
 ![React](https://img.shields.io/badge/React-19-61dafb.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178c6.svg)
 
+🌐 **[Live Demo](https://qalp4t3y.pinit.eth.limo)** | 📦 **[GitHub](https://github.com/zhajiahe/MDEditor)**
+
 </div>
 
 ## ✨ Features

@@ -62,7 +62,7 @@ function App() {
 
   // --- Settings & Theme State ---
   const [theme, setTheme] = useState<Theme>(() => {
-    return (localStorage.getItem('nebula-theme') as Theme) || 'dark';
+    return (localStorage.getItem('nebula-theme') as Theme) || 'light';
   });
 
   const [aiSettings, setAiSettings] = useState<AISettings>(() => {
