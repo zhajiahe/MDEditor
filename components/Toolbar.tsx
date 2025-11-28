@@ -4,7 +4,7 @@ import {
   Wand2, Download, FileText, FileCode, Printer, Columns, 
   PanelLeft, PanelRight, Type, Check, X,
   Menu, Image as ImageIcon, Sparkles, Languages, Edit3, Settings, Sun, Moon,
-  SeparatorHorizontal, ImagePlus, CircleHelp
+  Minus, ImagePlus, CircleHelp, FileType
 } from 'lucide-react';
 import { ViewMode, Theme, AIRequestOptions } from '../types';
 
@@ -72,7 +72,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 <ToolbarButton icon={Code} label="Code Block" onClick={() => onInsert('```\n', '\n```')} />
                 <ToolbarButton icon={ImageIcon} label="Link Image" onClick={() => onInsert('![Alt Text](', ')')} />
                 <ToolbarButton icon={ImagePlus} label="Upload Image" onClick={onUploadImage} />
-                <ToolbarButton icon={SeparatorHorizontal} label="Page Break" onClick={() => onInsert('\n<div class="page-break"></div>\n', '')} />
+                <ToolbarButton icon={Minus} label="Page Break" onClick={() => onInsert('\n<div class="page-break"></div>\n', '')} />
             </div>
         </div>
 
@@ -156,7 +156,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             <div className="flex items-center gap-1 bg-white dark:bg-notion-bg border border-gray-200 dark:border-notion-border rounded-lg p-1 transition-colors">
                 <ToolbarButton icon={Download} label="Export Markdown" onClick={() => onExport('md')} />
                 <ToolbarButton icon={FileCode} label="Export HTML" onClick={() => onExport('html')} />
-                <ToolbarButton icon={FileText} label="Export Word" onClick={() => onExport('word')} />
+                <ToolbarButton icon={FileType} label="Export Word" onClick={() => onExport('word')} />
                 <ToolbarButton icon={Printer} label="Print / PDF" onClick={() => onExport('pdf')} />
             </div>
 

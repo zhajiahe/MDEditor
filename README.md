@@ -10,7 +10,7 @@
 ![React](https://img.shields.io/badge/React-19-61dafb.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178c6.svg)
 
-🌐 **[Live Demo](https://qalp4t3y.pinit.eth.limo)** | 📦 **[GitHub](https://github.com/zhajiahe/MDEditor)**
+🌐 **[Live Demo (GitHub Pages)](https://zhajiahe.github.io/MDEditor/)** | 🌐 **[Live Demo (IPFS)](https://qalp4t3y.pinit.eth.limo)** | 📦 **[GitHub](https://github.com/zhajiahe/MDEditor)**
 
 </div>
 
@@ -53,8 +53,8 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/nebula-markdown.git
-cd nebula-markdown
+git clone https://github.com/zhajiahe/MDEditor.git
+cd MDEditor
 
 # Install dependencies
 pnpm install

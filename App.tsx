@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Toolbar } from './components/Toolbar';
 import { Editor } from './components/Editor';
 import { Preview } from './components/Preview';
@@ -7,58 +7,28 @@ import { SettingsModal } from './components/SettingsModal';
 import { StatusBar } from './components/StatusBar';
 import { PrintPreviewModal } from './components/PrintPreviewModal';
 import { HelpModal } from './components/HelpModal';
+import { ToastContainer } from './components/Toast';
 import { ViewMode, AIRequestOptions, MarkdownDoc, Theme, AISettings, PrintSettings } from './types';
 import { generateAIContent } from './services/geminiService';
 import { compressImage } from './utils/editorUtils';
-
-const DEFAULT_DOC_ID = 'default-doc';
-const WELCOME_CONTENT = `# Welcome to Nebula Markdown
-
-This is an **AI-powered** Markdown editor.
-
-## Features
-- **File Management**: Create and manage multiple documents in the sidebar.
-- **AI Assist**: Use the magic wand to improve, summarize, or continue your text.
-- **Diagrams**: Support for Mermaid.js diagrams.
-\`\`\`mermaid
-graph TD;
-    A[Start] --> B{Is it AI?};
-    B -- Yes --> C[Great!];
-    B -- No --> D[Make it AI];
-\`\`\`
-- **Math**: $E = mc^2$
-- **Images**: Paste images directly from your clipboard!
-- **Export**: PDF, Markdown, HTML, and Word (.docx).
-
-## Try it out!
-Select this text and ask AI to translate it, or just start typing...
-`;
+import { useDocuments } from './hooks/useDocuments';
+import { useToast } from './hooks/useToast';
 
 function App() {
-  const [documents, setDocuments] = useState<MarkdownDoc[]>(() => {
-    try {
-      const stored = localStorage.getItem('nebula-docs');
-      return stored ? JSON.parse(stored) : [{
-        id: DEFAULT_DOC_ID,
-        title: 'Welcome Note',
-        content: WELCOME_CONTENT,
-        lastModified: Date.now(),
-        attachments: {}
-      }];
-    } catch {
-      return [{
-        id: DEFAULT_DOC_ID,
-        title: 'Welcome Note',
-        content: WELCOME_CONTENT,
-        lastModified: Date.now(),
-        attachments: {}
-      }];
-    }
-  });
+  // --- Document Management Hook ---
+  const {
+    documents,
+    activeDocId,
+    activeDoc,
+    setActiveDocId,
+    setDocuments,
+    handleUpdateContent,
+    handleCreateDoc,
+    handleDeleteDoc,
+  } = useDocuments();
 
-  const [activeDocId, setActiveDocId] = useState<string>(() => {
-    return localStorage.getItem('nebula-active-doc') || DEFAULT_DOC_ID;
-  });
+  // --- Toast Hook ---
+  const { toasts, addToast, removeToast } = useToast();
 
   // --- Settings & Theme State ---
   const [theme, setTheme] = useState<Theme>(() => {
@@ -89,17 +59,7 @@ function App() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isScrolling = useRef(false);
 
-  const activeDoc = documents.find(d => d.id === activeDocId) || documents[0];
-
-  // --- Persistence ---
-  useEffect(() => {
-    localStorage.setItem('nebula-docs', JSON.stringify(documents));
-  }, [documents]);
-
-  useEffect(() => {
-    localStorage.setItem('nebula-active-doc', activeDocId);
-  }, [activeDocId]);
-
+  // --- Theme Persistence ---
   useEffect(() => {
     localStorage.setItem('nebula-theme', theme);
     const root = window.document.documentElement;
@@ -114,47 +74,8 @@ function App() {
     localStorage.setItem('nebula-ai-settings', JSON.stringify(aiSettings));
   }, [aiSettings]);
 
-  // --- Document Management ---
-  const handleUpdateContent = (newContent: string) => {
-    const titleMatch = newContent.match(/^#\s+(.+)$/m) || newContent.match(/^(.+)$/m);
-    const newTitle = titleMatch ? titleMatch[1].trim() : 'Untitled';
-    
-    setDocuments(docs => docs.map(doc => 
-      doc.id === activeDocId 
-        ? { ...doc, content: newContent, title: newTitle.substring(0, 30), lastModified: Date.now() } 
-        : doc
-    ));
-  };
-
-  const handleCreateDoc = () => {
-    const newDoc: MarkdownDoc = {
-      id: crypto.randomUUID(),
-      title: 'New Document',
-      content: '',
-      lastModified: Date.now(),
-      attachments: {}
-    };
-    setDocuments([newDoc, ...documents]);
-    setActiveDocId(newDoc.id);
-  };
-
-  const handleDeleteDoc = (id: string) => {
-    if (documents.length <= 1) {
-      alert("Cannot delete the last document.");
-      return;
-    }
-    
-    if (confirm("Are you sure you want to delete this document?")) {
-      const newDocs = documents.filter(d => d.id !== id);
-      setDocuments(newDocs);
-      if (activeDocId === id) {
-        setActiveDocId(newDocs[0].id);
-      }
-    }
-  };
-
   // --- Scroll Sync ---
-  const handleScroll = (source: 'editor' | 'preview') => {
+  const handleScroll = useCallback((source: 'editor' | 'preview') => {
     if (isScrolling.current) return;
     isScrolling.current = true;
 
@@ -174,10 +95,10 @@ function App() {
     setTimeout(() => {
       isScrolling.current = false;
     }, 50);
-  };
+  }, []);
 
   // --- Insert Helper ---
-  const handleInsert = (prefix: string, suffix: string) => {
+  const handleInsert = useCallback((prefix: string, suffix: string) => {
     const textarea = textareaRef.current;
     if (!textarea) return;
 
@@ -193,10 +114,10 @@ function App() {
       textarea.focus();
       textarea.setSelectionRange(start + prefix.length, end + prefix.length);
     }, 0);
-  };
+  }, [handleUpdateContent]);
 
   // --- Image Handling ---
-  const handleImageUpload = async (file: File) => {
+  const handleImageUpload = useCallback(async (file: File) => {
     try {
       const base64 = await compressImage(file);
       const id = `img-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
@@ -214,7 +135,6 @@ function App() {
       }));
 
       // 2. Insert Clean Reference into Editor
-      // If we have a selection, use it as alt text, otherwise default to "Image"
       const textarea = textareaRef.current;
       if (textarea) {
         const start = textarea.selectionStart;
@@ -225,27 +145,28 @@ function App() {
         
         handleInsert(tag, '');
       }
-
+      
+      addToast('Image uploaded successfully', 'success');
     } catch (err) {
       console.error(err);
-      alert("Failed to process image.");
+      addToast('Failed to process image', 'error');
     }
-  };
+  }, [activeDocId, handleInsert, setDocuments, addToast]);
 
-  const handleImageUploadTrigger = () => {
+  const handleImageUploadTrigger = useCallback(() => {
     fileInputRef.current?.click();
-  };
+  }, []);
 
-  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       handleImageUpload(file);
     }
     if (fileInputRef.current) fileInputRef.current.value = '';
-  };
+  }, [handleImageUpload]);
 
   // --- AI Handler ---
-  const handleAIAction = async (type: AIRequestOptions['type'], customPrompt?: string) => {
+  const handleAIAction = useCallback(async (type: AIRequestOptions['type'], customPrompt?: string) => {
     const textarea = textareaRef.current;
     if (!textarea) return;
 
@@ -256,6 +177,8 @@ function App() {
     const context = selection || text;
 
     setIsAILoading(true);
+    addToast('AI is processing...', 'info');
+    
     try {
       const result = await generateAIContent({
         type,
@@ -275,15 +198,16 @@ function App() {
       }
 
       handleUpdateContent(newText);
+      addToast('AI content generated successfully', 'success');
     } catch (error) {
-      alert(`AI Error: ${(error as Error).message}`);
+      addToast(`AI Error: ${(error as Error).message}`, 'error');
     } finally {
       setIsAILoading(false);
     }
-  };
+  }, [aiSettings, handleUpdateContent, addToast]);
 
   // --- Print Handler ---
-  const handlePrint = (settings: PrintSettings) => {
+  const handlePrint = useCallback((settings: PrintSettings) => {
     // 1. Create a dynamic style tag for print metrics
     let style = document.getElementById('nebula-print-style');
     if (!style) {
@@ -317,10 +241,10 @@ function App() {
     setTimeout(() => {
         window.print();
     }, 300);
-  };
+  }, []);
 
   // --- Export Handler ---
-  const handleExport = (type: 'md' | 'html' | 'word' | 'pdf') => {
+  const handleExport = useCallback((type: 'md' | 'html' | 'word' | 'pdf') => {
     if (type === 'pdf') {
       setIsPrintModalOpen(true);
       return;
@@ -454,8 +378,9 @@ function App() {
         a.href = URL.createObjectURL(converted);
         a.download = `${safeTitle}.docx`;
         a.click();
+        addToast('Word document exported successfully', 'success');
       } else {
-        alert("Export library not loaded.");
+        addToast("Export library not loaded", 'error');
       }
       return;
     } 
@@ -500,6 +425,7 @@ function App() {
       a.download = `${safeTitle}.html`;
       a.click();
       URL.revokeObjectURL(url);
+      addToast('HTML file exported successfully', 'success');
       return;
     }
 
@@ -530,7 +456,17 @@ function App() {
     a.download = `${safeTitle}.md`;
     a.click();
     URL.revokeObjectURL(url);
-  };
+    addToast('Markdown file exported successfully', 'success');
+  }, [activeDoc, addToast]);
+
+  // --- Memoized Callbacks for Toggle Operations ---
+  const toggleSidebar = useCallback(() => setIsSidebarOpen(prev => !prev), []);
+  const toggleTheme = useCallback(() => setTheme(prev => prev === 'dark' ? 'light' : 'dark'), []);
+  const openSettings = useCallback(() => setIsSettingsOpen(true), []);
+  const closeSettings = useCallback(() => setIsSettingsOpen(false), []);
+  const openHelp = useCallback(() => setIsHelpOpen(true), []);
+  const closeHelp = useCallback(() => setIsHelpOpen(false), []);
+  const closePrintModal = useCallback(() => setIsPrintModalOpen(false), []);
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-notion-bg text-gray-900 dark:text-notion-text overflow-hidden transition-colors duration-200">
@@ -551,7 +487,7 @@ function App() {
         onCreate={handleCreateDoc}
         onDelete={handleDeleteDoc}
         isOpen={isSidebarOpen}
-        onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+        onToggle={toggleSidebar}
       />
 
       <div className="flex-1 flex flex-col h-full min-w-0 relative">
@@ -563,12 +499,12 @@ function App() {
           viewMode={viewMode}
           setViewMode={setViewMode}
           isAILoading={isAILoading}
-          toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+          toggleSidebar={toggleSidebar}
           isSidebarOpen={isSidebarOpen}
           theme={theme}
-          onToggleTheme={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-          onOpenSettings={() => setIsSettingsOpen(true)}
-          onOpenHelp={() => setIsHelpOpen(true)}
+          onToggleTheme={toggleTheme}
+          onOpenSettings={openSettings}
+          onOpenHelp={openHelp}
         />
         
         <div className="flex-1 flex overflow-hidden relative">
@@ -603,14 +539,14 @@ function App() {
 
       <SettingsModal 
         isOpen={isSettingsOpen} 
-        onClose={() => setIsSettingsOpen(false)} 
+        onClose={closeSettings} 
         settings={aiSettings}
         onSave={setAiSettings}
       />
 
       <PrintPreviewModal 
         isOpen={isPrintModalOpen}
-        onClose={() => setIsPrintModalOpen(false)}
+        onClose={closePrintModal}
         content={activeDoc.content}
         theme={theme}
         onPrint={handlePrint}
@@ -619,8 +555,11 @@ function App() {
 
       <HelpModal 
         isOpen={isHelpOpen}
-        onClose={() => setIsHelpOpen(false)}
+        onClose={closeHelp}
       />
+      
+      {/* Toast Notifications */}
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
     </div>
   );
 }
