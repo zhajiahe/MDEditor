@@ -72,9 +72,31 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
             </div>
 
             {formData.provider === 'gemini' ? (
-              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg flex gap-3 text-sm text-blue-800 dark:text-blue-300">
-                <AlertCircle size={20} className="shrink-0" />
-                <p>Using the built-in Gemini 2.5 Flash model via the application's secure environment. No configuration needed.</p>
+              <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg flex gap-3 text-sm text-blue-800 dark:text-blue-300">
+                  <AlertCircle size={20} className="shrink-0" />
+                  <p>Enter your Gemini API Key from <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="underline">Google AI Studio</a>.</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Gemini API Key</label>
+                  <input
+                    type="password"
+                    value={formData.apiKey || ''}
+                    onChange={(e) => setFormData({ ...formData, apiKey: e.target.value })}
+                    placeholder="AIza..."
+                    className="w-full px-3 py-2 bg-white dark:bg-notion-item border border-gray-300 dark:border-notion-border rounded-md text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Model Name (optional)</label>
+                  <input
+                    type="text"
+                    value={formData.model || ''}
+                    onChange={(e) => setFormData({ ...formData, model: e.target.value })}
+                    placeholder="gemini-2.5-flash (default)"
+                    className="w-full px-3 py-2 bg-white dark:bg-notion-item border border-gray-300 dark:border-notion-border rounded-md text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
               </div>
             ) : (
               <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">

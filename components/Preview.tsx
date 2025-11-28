@@ -15,9 +15,11 @@ interface PreviewProps {
   onScroll?: () => void;
   theme: Theme;
   attachments?: Record<string, string>;
+  isPrintMode?: boolean; // When true, use light theme for export
+  hidePageBreakLabels?: boolean; // When true, hide "PAGE BREAK" text labels only
 }
 
-export const Preview: React.FC<PreviewProps> = ({ markdown, scrollRef, onScroll, theme, attachments }) => {
+export const Preview: React.FC<PreviewProps> = ({ markdown, scrollRef, onScroll, theme, attachments, isPrintMode = false, hidePageBreakLabels = false }) => {
   // Debounce the markdown sent to the heavy renderers
   const debouncedMarkdown = useDebounce(markdown, 300);
 
@@ -30,11 +32,21 @@ export const Preview: React.FC<PreviewProps> = ({ markdown, scrollRef, onScroll,
     return src;
   };
 
+  // In print mode, force light theme styles
+  // hidePageBreakLabels hides only the "PAGE BREAK" text, keeping visual separator
+  const printModeClasses = isPrintMode ? "print-mode" : "";
+  const labelHideClasses = hidePageBreakLabels ? "hide-page-break-labels" : "";
+  
+  const containerClasses = isPrintMode
+    ? `markdown-body prose prose-blue max-w-none h-full overflow-auto p-8 bg-white text-gray-900 ${printModeClasses} ${labelHideClasses}`
+    : `markdown-body prose dark:prose-invert prose-blue max-w-none h-full overflow-auto p-8 bg-white dark:bg-notion-bg scroll-smooth transition-colors duration-200 dark:text-notion-text ${labelHideClasses}`;
+
   return (
     <div 
       ref={scrollRef}
       onScroll={onScroll}
-      className="markdown-body prose dark:prose-invert prose-blue max-w-none h-full overflow-auto p-8 bg-white dark:bg-notion-bg scroll-smooth transition-colors duration-200 dark:text-notion-text"
+      className={containerClasses}
+      style={isPrintMode ? { backgroundColor: 'white', color: '#1a1a1a' } : undefined}
     >
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}

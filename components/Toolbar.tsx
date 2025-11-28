@@ -4,7 +4,7 @@ import {
   Wand2, Download, FileText, FileCode, Printer, Columns, 
   PanelLeft, PanelRight, Type, Check, X,
   Menu, Image as ImageIcon, Sparkles, Languages, Edit3, Settings, Sun, Moon,
-  Scissors, ImagePlus, CircleHelp
+  SeparatorHorizontal, ImagePlus, CircleHelp
 } from 'lucide-react';
 import { ViewMode, Theme, AIRequestOptions } from '../types';
 
@@ -72,7 +72,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 <ToolbarButton icon={Code} label="Code Block" onClick={() => onInsert('```\n', '\n```')} />
                 <ToolbarButton icon={ImageIcon} label="Link Image" onClick={() => onInsert('![Alt Text](', ')')} />
                 <ToolbarButton icon={ImagePlus} label="Upload Image" onClick={onUploadImage} />
-                <ToolbarButton icon={Scissors} label="Page Break" onClick={() => onInsert('\n<div class="page-break"></div>\n', '')} />
+                <ToolbarButton icon={SeparatorHorizontal} label="Page Break" onClick={() => onInsert('\n<div class="page-break"></div>\n', '')} />
             </div>
         </div>
 

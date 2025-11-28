@@ -9,6 +9,7 @@ interface PrintPreviewModalProps {
   content: string;
   theme: Theme;
   onPrint: (settings: PrintSettings) => void;
+  documentTitle?: string; // For default filename
 }
 
 export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
@@ -16,7 +17,8 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
   onClose,
   content,
   theme,
-  onPrint
+  onPrint,
+  documentTitle = 'document'
 }) => {
   const [settings, setSettings] = useState<PrintSettings>({
     pageSize: 'a4',
@@ -26,6 +28,7 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
     showPageNumbers: true
   });
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [filename, setFilename] = useState(documentTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase());
   const printContentRef = useRef<HTMLDivElement>(null);
 
   if (!isOpen) return null;
@@ -62,13 +65,19 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
     }
 
     setIsGeneratingPdf(true);
+    
+    // Add print-export-mode class to hide page break visuals during PDF generation
+    element.classList.add('print-export-mode');
 
+    const safeFilename = filename.trim() || 'document';
     const opt = {
         margin: settings.margin, // Uses jsPDF units (mm)
-        filename: 'document.pdf',
+        filename: `${safeFilename}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true, letterRendering: true },
-        jsPDF: { unit: 'mm', format: settings.pageSize, orientation: settings.orientation }
+        jsPDF: { unit: 'mm', format: settings.pageSize, orientation: settings.orientation },
+        // Enable page breaks AFTER page-break class elements (not before)
+        pagebreak: { mode: ['css', 'legacy'], after: '.page-break' }
     };
 
     // @ts-ignore
@@ -76,9 +85,13 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
         .set(opt)
         .from(element)
         .save()
-        .then(() => setIsGeneratingPdf(false))
+        .then(() => {
+            element.classList.remove('print-export-mode');
+            setIsGeneratingPdf(false);
+        })
         .catch((err: any) => {
             console.error(err);
+            element.classList.remove('print-export-mode');
             setIsGeneratingPdf(false);
             alert("Failed to generate PDF.");
         });
@@ -188,7 +201,22 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
 
           </div>
 
-          <div className="p-4 border-t border-gray-200 dark:border-notion-border bg-white dark:bg-notion-sidebar space-y-2">
+          <div className="p-4 border-t border-gray-200 dark:border-notion-border bg-white dark:bg-notion-sidebar space-y-3">
+            {/* Filename Input */}
+            <div className="space-y-1">
+              <label className="text-xs font-semibold uppercase text-gray-500 tracking-wider">Filename</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={filename}
+                  onChange={(e) => setFilename(e.target.value)}
+                  placeholder="document"
+                  className="flex-1 px-3 py-2 bg-white dark:bg-notion-item border border-gray-300 dark:border-notion-border rounded-md text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+                <span className="text-sm text-gray-500 dark:text-gray-400">.pdf</span>
+              </div>
+            </div>
+            
             <button
                 onClick={handleDownloadPdf}
                 disabled={isGeneratingPdf}
@@ -223,18 +251,24 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
              {/* 
                 We use the ref here to capture just the content content for html2pdf.
                 We apply the font size scaling directly here so it is preserved in the snapshot.
+                Force light theme styles for PDF export (html2pdf doesn't use @media print)
+                Note: print-export-mode class is added dynamically before PDF export to hide page breaks
              */}
              <div 
                 ref={printContentRef}
                 className={`prose max-w-none ${settings.scale < 80 ? 'prose-sm' : settings.scale > 120 ? 'prose-lg' : ''}`}
                 style={{
                     fontSize: `${settings.scale / 100}rem`,
+                    backgroundColor: 'white',
+                    color: '#1a1a1a',
                 }}
              >
                 <Preview 
                   markdown={content} 
                   scrollRef={{ current: null }} // No scroll sync needed here
                   theme="light" // Always preview in light mode for print
+                  isPrintMode={true} // Use light theme styles
+                  hidePageBreakLabels={true} // Hide "PAGE BREAK" text but keep visual separator line
                 />
              </div>
 

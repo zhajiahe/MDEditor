@@ -102,13 +102,72 @@
         }
       }
 
+      /* Hide "PAGE BREAK" text label but keep visual separator line */
+      .hide-page-break-labels .page-break::after {
+        display: none !important;
+        content: none !important;
+      }
+      
+      /* Keep page break visual separator in print preview */
+      .hide-page-break-labels .page-break {
+        border-bottom: 2px dashed #ccc !important;
+        margin: 2rem 0 !important;
+        height: auto !important;
+      }
+      
+      /* For actual PDF export, completely hide page break visuals */
+      .print-export-mode .page-break {
+        border: none !important;
+        margin: 0 !important;
+        height: 0 !important;
+        visibility: hidden !important;
+      }
+      .print-export-mode .page-break::after {
+        display: none !important;
+        content: none !important;
+      }
+      
+      /* Force light theme in print/export mode */
+      .print-mode,
+      .print-export-mode {
+        background-color: white !important;
+        color: #1a1a1a !important;
+      }
+      .print-mode *,
+      .print-export-mode * {
+        color: inherit;
+      }
+      .print-mode pre,
+      .print-export-mode pre {
+        background-color: #f5f5f5 !important;
+      }
+      .print-mode code,
+      .print-export-mode code {
+        background-color: #f0f0f0 !important;
+        color: #333 !important;
+      }
+      .print-mode table,
+      .print-export-mode table {
+        border-color: #ddd !important;
+      }
+      .print-mode th,
+      .print-export-mode th {
+        background-color: #f5f5f5 !important;
+        color: #333 !important;
+      }
+      .print-mode td,
+      .print-export-mode td {
+        border-color: #ddd !important;
+        color: #333 !important;
+      }
+
       /* Print styles to hide UI */
       @media print {
         .no-print { display: none !important; }
         .print-only { display: block !important; width: 100%; height: auto; overflow: visible; }
-        body { background: white; color: black; }
+        body { background: white !important; color: black !important; }
         /* Reset padding for the markdown body in print mode, as it's handled by @page */
-        .markdown-body { padding: 0 !important; }
+        .markdown-body { padding: 0 !important; background: white !important; }
         
         /* Ensure page break works in print */
         .page-break {
@@ -144,5 +203,6 @@
 </head>
   <body class="overflow-hidden bg-white dark:bg-notion-bg transition-colors duration-200">
     <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
   </body>
 </html>

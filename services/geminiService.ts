@@ -1,9 +1,15 @@
 import { GoogleGenAI } from "@google/genai";
 import { AIRequestOptions, AISettings } from '../types';
 
-// Default Gemini Instance
-const geminiAi = new GoogleGenAI({ apiKey: process.env.API_KEY });
 const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash';
+
+// Create Gemini client with provided API key (no caching to support key changes)
+const getGeminiClient = (apiKey: string) => {
+  if (!apiKey) {
+    throw new Error('Gemini API Key is not configured. Please set it in Settings.');
+  }
+  return new GoogleGenAI({ apiKey });
+};
 
 export const generateAIContent = async (options: AIRequestOptions, settings: AISettings): Promise<string> => {
   let systemInstruction = "You are a helpful AI writing assistant for a Markdown editor. Output strictly in Markdown format.";
@@ -70,10 +76,15 @@ export const generateAIContent = async (options: AIRequestOptions, settings: AIS
     }
   }
 
-  // 2. Default Gemini Provider
+  // 2. Gemini Provider (requires user-configured API key)
+  if (!settings.apiKey) {
+    throw new Error('Gemini API Key is not configured. Please set it in Settings → AI Configuration.');
+  }
+  
   try {
-    const response = await geminiAi.models.generateContent({
-      model: DEFAULT_GEMINI_MODEL,
+    const client = getGeminiClient(settings.apiKey);
+    const response = await client.models.generateContent({
+      model: settings.model || DEFAULT_GEMINI_MODEL,
       contents: prompt,
       config: {
         systemInstruction: systemInstruction,

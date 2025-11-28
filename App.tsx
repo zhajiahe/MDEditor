@@ -331,6 +331,21 @@ function App() {
     const safeTitle = activeDoc.title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
 
     if (type === 'word') {
+      // Process HTML content for better Word compatibility
+      let processedHtml = htmlContent;
+      
+      // Convert Mermaid SVGs to images (Word doesn't support SVG well)
+      const mermaidDivs = document.querySelectorAll('.markdown-body [data-mermaid]');
+      mermaidDivs.forEach((div) => {
+        const svg = div.querySelector('svg');
+        if (svg) {
+          // Create a placeholder note for Mermaid diagrams
+          const placeholder = document.createElement('div');
+          placeholder.innerHTML = '<p style="color: #666; font-style: italic; border: 1px dashed #ccc; padding: 10px; text-align: center;">[Mermaid Diagram - View in HTML or PDF export for full diagram]</p>';
+          processedHtml = processedHtml.replace(div.outerHTML, placeholder.innerHTML);
+        }
+      });
+      
       const content = `
         <!DOCTYPE html>
         <html>
@@ -338,24 +353,103 @@ function App() {
             <meta charset="utf-8">
             <title>${activeDoc.title}</title>
             <style>
-              body { font-family: 'Calibri', 'Arial', sans-serif; font-size: 11pt; line-height: 1.5; }
-              h1 { font-size: 18pt; color: #2E74B5; }
-              h2 { font-size: 14pt; color: #2E74B5; }
-              code { font-family: 'Consolas', 'Courier New', monospace; background: #f0f0f0; }
-              pre { background: #f0f0f0; padding: 10px; }
-              table { border-collapse: collapse; width: 100%; }
-              td, th { border: 1px solid #ddd; padding: 8px; }
-              img { max-width: 100%; }
+              /* Base Typography */
+              body { 
+                font-family: 'Calibri', 'Arial', sans-serif; 
+                font-size: 11pt; 
+                line-height: 1.6; 
+                color: #333;
+                max-width: 800px;
+                margin: 0 auto;
+              }
+              
+              /* Headings */
+              h1 { font-size: 24pt; color: #2E74B5; margin-top: 24pt; margin-bottom: 12pt; font-weight: bold; }
+              h2 { font-size: 18pt; color: #2E74B5; margin-top: 20pt; margin-bottom: 10pt; font-weight: bold; }
+              h3 { font-size: 14pt; color: #2E74B5; margin-top: 16pt; margin-bottom: 8pt; font-weight: bold; }
+              h4 { font-size: 12pt; color: #333; margin-top: 14pt; margin-bottom: 6pt; font-weight: bold; }
+              
+              /* Paragraphs and Text */
+              p { margin: 0 0 10pt 0; text-align: justify; }
+              strong { font-weight: bold; }
+              em { font-style: italic; }
+              
+              /* Code */
+              code { 
+                font-family: 'Consolas', 'Courier New', monospace; 
+                font-size: 10pt;
+                background-color: #f5f5f5; 
+                padding: 2px 4px;
+                border-radius: 3px;
+              }
+              pre { 
+                font-family: 'Consolas', 'Courier New', monospace;
+                font-size: 10pt;
+                background-color: #f5f5f5; 
+                padding: 12pt; 
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                overflow-x: auto;
+                white-space: pre-wrap;
+                word-wrap: break-word;
+              }
+              
+              /* Tables */
+              table { 
+                border-collapse: collapse; 
+                width: 100%; 
+                margin: 12pt 0;
+              }
+              th { 
+                background-color: #f0f0f0; 
+                border: 1px solid #ccc; 
+                padding: 8pt; 
+                text-align: left;
+                font-weight: bold;
+              }
+              td { 
+                border: 1px solid #ccc; 
+                padding: 8pt; 
+              }
+              
+              /* Lists */
+              ul, ol { margin: 10pt 0; padding-left: 24pt; }
+              li { margin: 4pt 0; }
+              
+              /* Blockquotes */
+              blockquote { 
+                border-left: 4px solid #2E74B5; 
+                padding-left: 12pt; 
+                margin: 12pt 0;
+                color: #666;
+                font-style: italic;
+              }
+              
+              /* Images */
+              img { 
+                max-width: 100%; 
+                height: auto;
+                margin: 12pt 0;
+              }
+              
+              /* Links */
+              a { color: #2E74B5; text-decoration: underline; }
+              
+              /* Math (KaTeX) - basic styling */
+              .katex { font-size: 1.1em; }
+              
+              /* Page breaks */
+              .page-break { page-break-after: always; }
             </style>
           </head>
-          <body>${htmlContent}</body>
+          <body>${processedHtml}</body>
         </html>
       `;
       
       // @ts-ignore
       if (window.htmlDocx) {
         // @ts-ignore
-        const converted = window.htmlDocx.asBlob(content, { orientation: 'portrait' });
+        const converted = window.htmlDocx.asBlob(content, { orientation: 'portrait', margins: { top: 720, right: 720, bottom: 720, left: 720 } });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(converted);
         a.download = `${safeTitle}.docx`;
@@ -520,6 +614,7 @@ function App() {
         content={activeDoc.content}
         theme={theme}
         onPrint={handlePrint}
+        documentTitle={activeDoc.title}
       />
 
       <HelpModal 
