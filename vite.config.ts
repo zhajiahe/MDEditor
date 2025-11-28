@@ -5,6 +5,8 @@ import react from '@vitejs/plugin-react';
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
     return {
+      // GitHub Pages base path - change to '/' if using custom domain
+      base: mode === 'production' ? '/MDEditor/' : '/',
       server: {
         port: 3000,
         host: '0.0.0.0',
