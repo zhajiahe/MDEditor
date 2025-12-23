@@ -10,7 +10,8 @@ import { ToastContainer } from './components/Toast';
 import { ViewMode, AIRequestOptions, MarkdownDoc, Theme, AISettings } from './types';
 import { generateAIContent } from './services/geminiService';
 import { compressImage } from './utils/editorUtils';
-import { exportToWord, downloadBlob } from './utils/wordExport';
+import { exportToWord, downloadBlob, WordExportSettings } from './utils/wordExport';
+import { WordPreviewModal } from './components/WordPreviewModal';
 import { useDocuments } from './hooks/useDocuments';
 import { useToast } from './hooks/useToast';
 
@@ -46,6 +47,8 @@ function App() {
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [isWordPreviewOpen, setIsWordPreviewOpen] = useState(false);
+  const [wordPreviewHtml, setWordPreviewHtml] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Split);
   const [isAILoading, setIsAILoading] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -300,22 +303,9 @@ function App() {
         return;
       }
 
-      // Use new html-to-docx based export
-      addToast('Generating Word document...', 'info');
-      
-      exportToWord({
-        title: activeDoc.title,
-        htmlContent: htmlContent,
-        attachments: activeDoc.attachments,
-      })
-        .then((blob) => {
-          downloadBlob(blob, `${safeTitle}.docx`);
-          addToast('Word document exported successfully', 'success');
-        })
-        .catch((error) => {
-          console.error('Word export error:', error);
-          addToast(`Word export failed: ${error.message}`, 'error');
-        });
+      // Store HTML and open Word preview modal
+      setWordPreviewHtml(htmlContent);
+      setIsWordPreviewOpen(true);
       return;
     } 
     
@@ -392,6 +382,31 @@ function App() {
     URL.revokeObjectURL(url);
     addToast('Markdown file exported successfully', 'success');
   }, [activeDoc, addToast]);
+
+  // --- Word Export Handler (from preview modal) ---
+  const handleWordExport = useCallback(async (settings: WordExportSettings) => {
+    const safeTitle = activeDoc.title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+
+    if (!wordPreviewHtml) {
+      addToast("No content to export", 'error');
+      return;
+    }
+
+    try {
+      const blob = await exportToWord({
+        title: activeDoc.title,
+        htmlContent: wordPreviewHtml,
+        attachments: activeDoc.attachments,
+        settings: settings,
+      });
+      downloadBlob(blob, `${safeTitle}.docx`);
+      addToast('Word document exported successfully', 'success');
+      setIsWordPreviewOpen(false);
+    } catch (error) {
+      console.error('Word export error:', error);
+      addToast(`Word export failed: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
+    }
+  }, [activeDoc, addToast, wordPreviewHtml]);
 
   // --- Memoized Callbacks for Toggle Operations ---
   const toggleSidebar = useCallback(() => setIsSidebarOpen(prev => !prev), []);
@@ -480,6 +495,14 @@ function App() {
       <HelpModal 
         isOpen={isHelpOpen}
         onClose={closeHelp}
+      />
+
+      <WordPreviewModal
+        isOpen={isWordPreviewOpen}
+        onClose={() => setIsWordPreviewOpen(false)}
+        onExport={handleWordExport}
+        htmlContent={wordPreviewHtml}
+        title={activeDoc.title}
       />
       
       {/* Toast Notifications */}
