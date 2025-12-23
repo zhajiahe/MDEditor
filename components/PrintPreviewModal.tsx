@@ -10,6 +10,7 @@ interface PrintPreviewModalProps {
   theme: Theme;
   onPrint: (settings: PrintSettings) => void;
   documentTitle?: string; // For default filename
+  attachments?: Record<string, string>; // Image attachments for resolving attachment: URLs
 }
 
 export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
@@ -18,7 +19,8 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
   content,
   theme,
   onPrint,
-  documentTitle = 'document'
+  documentTitle = 'document',
+  attachments
 }) => {
   const [settings, setSettings] = useState<PrintSettings>({
     pageSize: 'a4',
@@ -54,7 +56,7 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
 
   const dims = getPageDimensions();
 
-  const handleDownloadPdf = () => {
+  const handleDownloadPdf = async () => {
     const element = printContentRef.current;
     if (!element) return;
 
@@ -69,12 +71,35 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
     // Add print-export-mode class to hide page break visuals during PDF generation
     element.classList.add('print-export-mode');
 
+    // Wait for Mermaid diagrams to fully render (they render async)
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    // Force all SVGs to have explicit dimensions for better html2canvas compatibility
+    const svgElements = element.querySelectorAll('svg');
+    svgElements.forEach(svg => {
+      const bbox = svg.getBoundingClientRect();
+      if (!svg.getAttribute('width')) {
+        svg.setAttribute('width', String(bbox.width || 400));
+      }
+      if (!svg.getAttribute('height')) {
+        svg.setAttribute('height', String(bbox.height || 300));
+      }
+    });
+
     const safeFilename = filename.trim() || 'document';
     const opt = {
         margin: settings.margin, // Uses jsPDF units (mm)
         filename: `${safeFilename}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+        html2canvas: { 
+          scale: 2, 
+          useCORS: true, 
+          letterRendering: true,
+          // Improve SVG rendering
+          foreignObjectRendering: true,
+          allowTaint: true,
+          logging: false,
+        },
         jsPDF: { unit: 'mm', format: settings.pageSize, orientation: settings.orientation },
         // Enable page breaks AFTER page-break class elements (not before)
         pagebreak: { mode: ['css', 'legacy'], after: '.page-break' }
@@ -269,6 +294,7 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
                   theme="light" // Always preview in light mode for print
                   isPrintMode={true} // Use light theme styles
                   hidePageBreakLabels={true} // Hide "PAGE BREAK" text but keep visual separator line
+                  attachments={attachments} // Pass attachments for resolving attachment: URLs
                 />
              </div>
 

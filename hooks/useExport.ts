@@ -53,19 +53,35 @@ export const useExport = ({ activeDoc, setIsPrintModalOpen }: UseExportProps) =>
     const safeTitle = activeDoc.title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
 
     if (type === 'word') {
-      // Process HTML content for better Word compatibility
-      let processedHtml = htmlContent;
-      
-      // Convert Mermaid SVGs to images (Word doesn't support SVG well)
-      const mermaidDivs = document.querySelectorAll('.markdown-body [data-mermaid]');
+      // Clone the preview element for safe DOM manipulation
+      const clonedElement = previewElement?.cloneNode(true) as HTMLElement | null;
+      if (!clonedElement) {
+        alert("No content to export");
+        return;
+      }
+
+      // Replace Mermaid SVGs with placeholders (DOM manipulation instead of string replacement)
+      const mermaidDivs = clonedElement.querySelectorAll('[data-mermaid]');
       mermaidDivs.forEach((div) => {
-        const svg = div.querySelector('svg');
-        if (svg) {
-          const placeholder = document.createElement('div');
-          placeholder.innerHTML = '<p style="color: #666; font-style: italic; border: 1px dashed #ccc; padding: 10px; text-align: center;">[Mermaid Diagram - View in HTML or PDF export for full diagram]</p>';
-          processedHtml = processedHtml.replace(div.outerHTML, placeholder.innerHTML);
+        const placeholder = document.createElement('p');
+        placeholder.style.cssText = 'color: #666; font-style: italic; border: 1px dashed #ccc; padding: 10px; text-align: center;';
+        placeholder.textContent = '[Mermaid Diagram - View in HTML or PDF export for full diagram]';
+        div.replaceWith(placeholder);
+      });
+
+      // Convert KaTeX math to plain text fallback for better Word compatibility
+      const katexElements = clonedElement.querySelectorAll('.katex');
+      katexElements.forEach((katex) => {
+        const annotation = katex.querySelector('annotation[encoding="application/x-tex"]');
+        if (annotation && annotation.textContent) {
+          const mathSpan = document.createElement('span');
+          mathSpan.style.cssText = 'font-family: "Cambria Math", "Times New Roman", serif; font-style: italic; background-color: #f9f9f9; padding: 2px 4px;';
+          mathSpan.textContent = `[Math: ${annotation.textContent}]`;
+          katex.replaceWith(mathSpan);
         }
       });
+
+      const processedHtml = clonedElement.innerHTML;
       
       const content = `
         <!DOCTYPE html>
@@ -99,7 +115,8 @@ export const useExport = ({ activeDoc, setIsPrintModalOpen }: UseExportProps) =>
               pre { 
                 font-family: 'Consolas', 'Courier New', monospace;
                 font-size: 10pt;
-                background-color: #f5f5f5; 
+                background-color: #282c34; 
+                color: #abb2bf;
                 padding: 12pt; 
                 border: 1px solid #ddd;
                 border-radius: 4px;
@@ -107,6 +124,18 @@ export const useExport = ({ activeDoc, setIsPrintModalOpen }: UseExportProps) =>
                 white-space: pre-wrap;
                 word-wrap: break-word;
               }
+              pre code { background-color: transparent; padding: 0; color: inherit; }
+              .hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #c678dd; }
+              .hljs-string, .hljs-attr { color: #98c379; }
+              .hljs-number, .hljs-literal { color: #d19a66; }
+              .hljs-comment { color: #5c6370; font-style: italic; }
+              .hljs-function, .hljs-title { color: #61afef; }
+              .hljs-variable, .hljs-template-variable { color: #e06c75; }
+              .hljs-type, .hljs-class { color: #e5c07b; }
+              .hljs-tag { color: #e06c75; }
+              .hljs-name { color: #e06c75; }
+              .hljs-attribute { color: #d19a66; }
+              .hljs-symbol, .hljs-bullet { color: #56b6c2; }
               table { border-collapse: collapse; width: 100%; margin: 12pt 0; }
               th { background-color: #f0f0f0; border: 1px solid #ccc; padding: 8pt; text-align: left; font-weight: bold; }
               td { border: 1px solid #ccc; padding: 8pt; }
@@ -115,7 +144,6 @@ export const useExport = ({ activeDoc, setIsPrintModalOpen }: UseExportProps) =>
               blockquote { border-left: 4px solid #2E74B5; padding-left: 12pt; margin: 12pt 0; color: #666; font-style: italic; }
               img { max-width: 100%; height: auto; margin: 12pt 0; }
               a { color: #2E74B5; text-decoration: underline; }
-              .katex { font-size: 1.1em; }
               .page-break { page-break-after: always; }
             </style>
           </head>

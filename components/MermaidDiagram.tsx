@@ -92,6 +92,7 @@ export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ chart, theme = '
   return (
     <div 
       className="mermaid-container my-6 flex justify-center bg-white dark:bg-notion-item/50 p-4 rounded-lg border border-gray-100 dark:border-notion-border overflow-x-auto shadow-sm transition-colors duration-200"
+      data-mermaid="true"
       dangerouslySetInnerHTML={{ __html: svg }} 
     />
   );

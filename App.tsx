@@ -255,20 +255,36 @@ function App() {
     const safeTitle = activeDoc.title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
 
     if (type === 'word') {
-      // Process HTML content for better Word compatibility
-      let processedHtml = htmlContent;
-      
-      // Convert Mermaid SVGs to images (Word doesn't support SVG well)
-      const mermaidDivs = document.querySelectorAll('.markdown-body [data-mermaid]');
+      // Clone the preview element for safe DOM manipulation
+      const clonedElement = previewElement?.cloneNode(true) as HTMLElement | null;
+      if (!clonedElement) {
+        addToast("No content to export", 'error');
+        return;
+      }
+
+      // Replace Mermaid SVGs with placeholders (DOM manipulation instead of string replacement)
+      const mermaidDivs = clonedElement.querySelectorAll('[data-mermaid]');
       mermaidDivs.forEach((div) => {
-        const svg = div.querySelector('svg');
-        if (svg) {
-          // Create a placeholder note for Mermaid diagrams
-          const placeholder = document.createElement('div');
-          placeholder.innerHTML = '<p style="color: #666; font-style: italic; border: 1px dashed #ccc; padding: 10px; text-align: center;">[Mermaid Diagram - View in HTML or PDF export for full diagram]</p>';
-          processedHtml = processedHtml.replace(div.outerHTML, placeholder.innerHTML);
+        const placeholder = document.createElement('p');
+        placeholder.style.cssText = 'color: #666; font-style: italic; border: 1px dashed #ccc; padding: 10px; text-align: center;';
+        placeholder.textContent = '[Mermaid Diagram - View in HTML or PDF export for full diagram]';
+        div.replaceWith(placeholder);
+      });
+
+      // Convert KaTeX math to plain text fallback for better Word compatibility
+      const katexElements = clonedElement.querySelectorAll('.katex');
+      katexElements.forEach((katex) => {
+        // Try to get the original LaTeX from annotation element
+        const annotation = katex.querySelector('annotation[encoding="application/x-tex"]');
+        if (annotation && annotation.textContent) {
+          const mathSpan = document.createElement('span');
+          mathSpan.style.cssText = 'font-family: "Cambria Math", "Times New Roman", serif; font-style: italic; background-color: #f9f9f9; padding: 2px 4px;';
+          mathSpan.textContent = `[Math: ${annotation.textContent}]`;
+          katex.replaceWith(mathSpan);
         }
       });
+
+      const processedHtml = clonedElement.innerHTML;
       
       const content = `
         <!DOCTYPE html>
@@ -298,7 +314,7 @@ function App() {
               strong { font-weight: bold; }
               em { font-style: italic; }
               
-              /* Code */
+              /* Code - base styles */
               code { 
                 font-family: 'Consolas', 'Courier New', monospace; 
                 font-size: 10pt;
@@ -309,7 +325,8 @@ function App() {
               pre { 
                 font-family: 'Consolas', 'Courier New', monospace;
                 font-size: 10pt;
-                background-color: #f5f5f5; 
+                background-color: #282c34; 
+                color: #abb2bf;
                 padding: 12pt; 
                 border: 1px solid #ddd;
                 border-radius: 4px;
@@ -317,6 +334,22 @@ function App() {
                 white-space: pre-wrap;
                 word-wrap: break-word;
               }
+              pre code { background-color: transparent; padding: 0; color: inherit; }
+              
+              /* Syntax Highlighting (Atom One Dark theme subset) */
+              .hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #c678dd; }
+              .hljs-string, .hljs-attr { color: #98c379; }
+              .hljs-number, .hljs-literal { color: #d19a66; }
+              .hljs-comment { color: #5c6370; font-style: italic; }
+              .hljs-function, .hljs-title { color: #61afef; }
+              .hljs-variable, .hljs-template-variable { color: #e06c75; }
+              .hljs-type, .hljs-class { color: #e5c07b; }
+              .hljs-tag { color: #e06c75; }
+              .hljs-name { color: #e06c75; }
+              .hljs-attribute { color: #d19a66; }
+              .hljs-symbol, .hljs-bullet { color: #56b6c2; }
+              .hljs-addition { color: #98c379; background-color: rgba(152, 195, 121, 0.1); }
+              .hljs-deletion { color: #e06c75; background-color: rgba(224, 108, 117, 0.1); }
               
               /* Tables */
               table { 
@@ -358,9 +391,6 @@ function App() {
               
               /* Links */
               a { color: #2E74B5; text-decoration: underline; }
-              
-              /* Math (KaTeX) - basic styling */
-              .katex { font-size: 1.1em; }
               
               /* Page breaks */
               .page-break { page-break-after: always; }
@@ -551,6 +581,7 @@ function App() {
         theme={theme}
         onPrint={handlePrint}
         documentTitle={activeDoc.title}
+        attachments={activeDoc.attachments}
       />
 
       <HelpModal 
