@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Search, Command, FileText, Download, Moon, Sun, 
+  Search, Command, FileText, Moon, Sun, Printer, 
   Split, PanelLeft, PanelRight, Sparkles, Plus, CircleHelp
 } from 'lucide-react';
 import { ViewMode, Theme } from '../types';
@@ -12,7 +12,7 @@ interface CommandPaletteProps {
   actions: {
     setViewMode: (mode: ViewMode) => void;
     toggleTheme: () => void;
-    onExport: (type: 'md' | 'html' | 'word' | 'pdf') => void;
+    onExport: (type: 'md' | 'html' | 'word' | 'print') => void;
     handleCreateDoc: () => void;
     onOpenHelp: () => void;
     theme: Theme;
@@ -35,7 +35,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
 
   const commands: Command[] = [
     { id: 'new', label: 'New Document', icon: Plus, action: actions.handleCreateDoc, group: 'File' },
-    { id: 'export-pdf', label: 'Export as PDF', icon: Download, action: () => actions.onExport('pdf'), group: 'Export' },
+    { id: 'print', label: 'Print / Save as PDF', icon: Printer, action: () => actions.onExport('print'), group: 'Export' },
     { id: 'export-md', label: 'Export as Markdown', icon: FileText, action: () => actions.onExport('md'), group: 'Export' },
     { id: 'export-html', label: 'Export as HTML', icon: FileText, action: () => actions.onExport('html'), group: 'Export' },
     { id: 'export-word', label: 'Export as Word', icon: FileText, action: () => actions.onExport('word'), group: 'Export' },

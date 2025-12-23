@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Bold, Italic, List, ListOrdered, Quote, Code, 
-  Wand2, Download, FileText, FileCode, Printer, Columns, 
+  Wand2, Download, FileText, FileCode, Columns, Printer, 
   PanelLeft, PanelRight, Type, Check, X,
   Menu, Image as ImageIcon, Sparkles, Languages, Edit3, Settings, Sun, Moon,
   Minus, ImagePlus, CircleHelp, FileType
@@ -11,7 +11,7 @@ import { ViewMode, Theme, AIRequestOptions } from '../types';
 interface ToolbarProps {
   onInsert: (prefix: string, suffix: string) => void;
   onAIAction: (type: AIRequestOptions['type'], customPrompt?: string) => void;
-  onExport: (type: 'md' | 'html' | 'word' | 'pdf') => void;
+  onExport: (type: 'md' | 'html' | 'word' | 'print') => void;
   onUploadImage: () => void;
   viewMode: ViewMode;
   setViewMode: (mode: ViewMode) => void;
@@ -157,7 +157,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 <ToolbarButton icon={Download} label="Export Markdown" onClick={() => onExport('md')} />
                 <ToolbarButton icon={FileCode} label="Export HTML" onClick={() => onExport('html')} />
                 <ToolbarButton icon={FileType} label="Export Word" onClick={() => onExport('word')} />
-                <ToolbarButton icon={Printer} label="Print / PDF" onClick={() => onExport('pdf')} />
+                <ToolbarButton icon={Printer} label="Print / Save as PDF" onClick={() => onExport('print')} />
             </div>
 
             {/* App Settings */}

@@ -39,8 +39,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
     <!-- html-docx-js for .docx export -->
     <script src="https://cdn.jsdelivr.net/npm/html-docx-js@0.3.1/dist/html-docx.min.js"></script>
-    <!-- html2pdf.js for .pdf export -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
       /* Custom Scrollbar for a sleeker look */
       ::-webkit-scrollbar {
@@ -115,48 +113,29 @@
         height: auto !important;
       }
       
-      /* For actual PDF export, completely hide page break visuals */
-      .print-export-mode .page-break {
-        border: none !important;
-        margin: 0 !important;
-        height: 0 !important;
-        visibility: hidden !important;
-      }
-      .print-export-mode .page-break::after {
-        display: none !important;
-        content: none !important;
-      }
-      
-      /* Force light theme in print/export mode */
-      .print-mode,
-      .print-export-mode {
+      /* Force light theme in print mode */
+      .print-mode {
         background-color: white !important;
         color: #1a1a1a !important;
       }
-      .print-mode *,
-      .print-export-mode * {
+      .print-mode * {
         color: inherit;
       }
-      .print-mode pre,
-      .print-export-mode pre {
+      .print-mode pre {
         background-color: #f5f5f5 !important;
       }
-      .print-mode code,
-      .print-export-mode code {
+      .print-mode code {
         background-color: #f0f0f0 !important;
         color: #333 !important;
       }
-      .print-mode table,
-      .print-export-mode table {
+      .print-mode table {
         border-color: #ddd !important;
       }
-      .print-mode th,
-      .print-export-mode th {
+      .print-mode th {
         background-color: #f5f5f5 !important;
         color: #333 !important;
       }
-      .print-mode td,
-      .print-export-mode td {
+      .print-mode td {
         border-color: #ddd !important;
         color: #333 !important;
       }

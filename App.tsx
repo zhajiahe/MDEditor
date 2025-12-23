@@ -5,12 +5,12 @@ import { Preview } from './components/Preview';
 import { Sidebar } from './components/Sidebar';
 import { SettingsModal } from './components/SettingsModal';
 import { StatusBar } from './components/StatusBar';
-import { PrintPreviewModal } from './components/PrintPreviewModal';
 import { HelpModal } from './components/HelpModal';
 import { ToastContainer } from './components/Toast';
-import { ViewMode, AIRequestOptions, MarkdownDoc, Theme, AISettings, PrintSettings } from './types';
+import { ViewMode, AIRequestOptions, MarkdownDoc, Theme, AISettings } from './types';
 import { generateAIContent } from './services/geminiService';
 import { compressImage } from './utils/editorUtils';
+import { exportToWord, downloadBlob } from './utils/wordExport';
 import { useDocuments } from './hooks/useDocuments';
 import { useToast } from './hooks/useToast';
 
@@ -45,7 +45,6 @@ function App() {
   });
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Split);
   const [isAILoading, setIsAILoading] = useState(false);
@@ -206,47 +205,88 @@ function App() {
     }
   }, [aiSettings, handleUpdateContent, addToast]);
 
-  // --- Print Handler ---
-  const handlePrint = useCallback((settings: PrintSettings) => {
-    // 1. Create a dynamic style tag for print metrics
-    let style = document.getElementById('nebula-print-style');
-    if (!style) {
-        style = document.createElement('style');
-        style.id = 'nebula-print-style';
-        document.head.appendChild(style);
-    }
-
-    // 2. Define the @page rules and body overrides
-    style.innerHTML = `
-      @page {
-        size: ${settings.pageSize} ${settings.orientation};
-        margin: ${settings.margin}mm;
-      }
-      @media print {
-        body {
-          font-size: ${settings.scale}%; 
-        }
-        /* Ensure preview component stretches correctly */
-        .markdown-body {
-           padding: 0 !important;
-           max-width: none !important;
-        }
-      }
-    `;
-
-    // 3. Close modal and trigger print
-    setIsPrintModalOpen(false);
-    
-    // Small delay to allow modal to close and styles to apply
-    setTimeout(() => {
-        window.print();
-    }, 300);
-  }, []);
-
   // --- Export Handler ---
-  const handleExport = useCallback((type: 'md' | 'html' | 'word' | 'pdf') => {
-    if (type === 'pdf') {
-      setIsPrintModalOpen(true);
+  const handleExport = useCallback((type: 'md' | 'html' | 'word' | 'print') => {
+    // Handle print via browser dialog
+    if (type === 'print') {
+      const previewElement = document.querySelector('.markdown-body');
+      if (!previewElement) return;
+
+      // Create a print-only iframe
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'absolute';
+      iframe.style.top = '-9999px';
+      iframe.style.left = '-9999px';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      document.body.appendChild(iframe);
+
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+      if (!iframeDoc) return;
+
+      // Copy styles from parent document
+      const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
+        .map(el => el.outerHTML)
+        .join('\n');
+
+      // Build the print document
+      iframeDoc.open();
+      iframeDoc.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <title>${activeDoc.title}</title>
+          ${styles}
+          <style>
+            @page {
+              size: A4;
+              margin: 20mm;
+            }
+            body {
+              margin: 0;
+              padding: 20px;
+              font-family: system-ui, -apple-system, sans-serif;
+              background: white;
+              color: #1a1a1a;
+            }
+            .markdown-body {
+              max-width: none !important;
+              background: white !important;
+            }
+            .page-break {
+              page-break-after: always;
+              break-after: page;
+            }
+            h1, h2, h3, h4, h5, h6 {
+              page-break-after: avoid;
+              break-after: avoid;
+            }
+            p, li, pre, blockquote, table, img {
+              page-break-inside: avoid;
+              break-inside: avoid;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="prose max-w-none markdown-body">
+            ${previewElement.innerHTML}
+          </div>
+        </body>
+        </html>
+      `);
+      iframeDoc.close();
+
+      // Wait for iframe to load, then print
+      setTimeout(() => {
+        iframe.contentWindow?.focus();
+        iframe.contentWindow?.print();
+        
+        // Remove iframe after print dialog closes
+        setTimeout(() => {
+          document.body.removeChild(iframe);
+        }, 1000);
+      }, 300);
       return;
     }
 
@@ -255,163 +295,27 @@ function App() {
     const safeTitle = activeDoc.title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
 
     if (type === 'word') {
-      // Clone the preview element for safe DOM manipulation
-      const clonedElement = previewElement?.cloneNode(true) as HTMLElement | null;
-      if (!clonedElement) {
+      if (!htmlContent) {
         addToast("No content to export", 'error');
         return;
       }
 
-      // Replace Mermaid SVGs with placeholders (DOM manipulation instead of string replacement)
-      const mermaidDivs = clonedElement.querySelectorAll('[data-mermaid]');
-      mermaidDivs.forEach((div) => {
-        const placeholder = document.createElement('p');
-        placeholder.style.cssText = 'color: #666; font-style: italic; border: 1px dashed #ccc; padding: 10px; text-align: center;';
-        placeholder.textContent = '[Mermaid Diagram - View in HTML or PDF export for full diagram]';
-        div.replaceWith(placeholder);
-      });
-
-      // Convert KaTeX math to plain text fallback for better Word compatibility
-      const katexElements = clonedElement.querySelectorAll('.katex');
-      katexElements.forEach((katex) => {
-        // Try to get the original LaTeX from annotation element
-        const annotation = katex.querySelector('annotation[encoding="application/x-tex"]');
-        if (annotation && annotation.textContent) {
-          const mathSpan = document.createElement('span');
-          mathSpan.style.cssText = 'font-family: "Cambria Math", "Times New Roman", serif; font-style: italic; background-color: #f9f9f9; padding: 2px 4px;';
-          mathSpan.textContent = `[Math: ${annotation.textContent}]`;
-          katex.replaceWith(mathSpan);
-        }
-      });
-
-      const processedHtml = clonedElement.innerHTML;
+      // Use new html-to-docx based export
+      addToast('Generating Word document...', 'info');
       
-      const content = `
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <meta charset="utf-8">
-            <title>${activeDoc.title}</title>
-            <style>
-              /* Base Typography */
-              body { 
-                font-family: 'Calibri', 'Arial', sans-serif; 
-                font-size: 11pt; 
-                line-height: 1.6; 
-                color: #333;
-                max-width: 800px;
-                margin: 0 auto;
-              }
-              
-              /* Headings */
-              h1 { font-size: 24pt; color: #2E74B5; margin-top: 24pt; margin-bottom: 12pt; font-weight: bold; }
-              h2 { font-size: 18pt; color: #2E74B5; margin-top: 20pt; margin-bottom: 10pt; font-weight: bold; }
-              h3 { font-size: 14pt; color: #2E74B5; margin-top: 16pt; margin-bottom: 8pt; font-weight: bold; }
-              h4 { font-size: 12pt; color: #333; margin-top: 14pt; margin-bottom: 6pt; font-weight: bold; }
-              
-              /* Paragraphs and Text */
-              p { margin: 0 0 10pt 0; text-align: justify; }
-              strong { font-weight: bold; }
-              em { font-style: italic; }
-              
-              /* Code - base styles */
-              code { 
-                font-family: 'Consolas', 'Courier New', monospace; 
-                font-size: 10pt;
-                background-color: #f5f5f5; 
-                padding: 2px 4px;
-                border-radius: 3px;
-              }
-              pre { 
-                font-family: 'Consolas', 'Courier New', monospace;
-                font-size: 10pt;
-                background-color: #282c34; 
-                color: #abb2bf;
-                padding: 12pt; 
-                border: 1px solid #ddd;
-                border-radius: 4px;
-                overflow-x: auto;
-                white-space: pre-wrap;
-                word-wrap: break-word;
-              }
-              pre code { background-color: transparent; padding: 0; color: inherit; }
-              
-              /* Syntax Highlighting (Atom One Dark theme subset) */
-              .hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #c678dd; }
-              .hljs-string, .hljs-attr { color: #98c379; }
-              .hljs-number, .hljs-literal { color: #d19a66; }
-              .hljs-comment { color: #5c6370; font-style: italic; }
-              .hljs-function, .hljs-title { color: #61afef; }
-              .hljs-variable, .hljs-template-variable { color: #e06c75; }
-              .hljs-type, .hljs-class { color: #e5c07b; }
-              .hljs-tag { color: #e06c75; }
-              .hljs-name { color: #e06c75; }
-              .hljs-attribute { color: #d19a66; }
-              .hljs-symbol, .hljs-bullet { color: #56b6c2; }
-              .hljs-addition { color: #98c379; background-color: rgba(152, 195, 121, 0.1); }
-              .hljs-deletion { color: #e06c75; background-color: rgba(224, 108, 117, 0.1); }
-              
-              /* Tables */
-              table { 
-                border-collapse: collapse; 
-                width: 100%; 
-                margin: 12pt 0;
-              }
-              th { 
-                background-color: #f0f0f0; 
-                border: 1px solid #ccc; 
-                padding: 8pt; 
-                text-align: left;
-                font-weight: bold;
-              }
-              td { 
-                border: 1px solid #ccc; 
-                padding: 8pt; 
-              }
-              
-              /* Lists */
-              ul, ol { margin: 10pt 0; padding-left: 24pt; }
-              li { margin: 4pt 0; }
-              
-              /* Blockquotes */
-              blockquote { 
-                border-left: 4px solid #2E74B5; 
-                padding-left: 12pt; 
-                margin: 12pt 0;
-                color: #666;
-                font-style: italic;
-              }
-              
-              /* Images */
-              img { 
-                max-width: 100%; 
-                height: auto;
-                margin: 12pt 0;
-              }
-              
-              /* Links */
-              a { color: #2E74B5; text-decoration: underline; }
-              
-              /* Page breaks */
-              .page-break { page-break-after: always; }
-            </style>
-          </head>
-          <body>${processedHtml}</body>
-        </html>
-      `;
-      
-      // @ts-ignore
-      if (window.htmlDocx) {
-        // @ts-ignore
-        const converted = window.htmlDocx.asBlob(content, { orientation: 'portrait', margins: { top: 720, right: 720, bottom: 720, left: 720 } });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(converted);
-        a.download = `${safeTitle}.docx`;
-        a.click();
-        addToast('Word document exported successfully', 'success');
-      } else {
-        addToast("Export library not loaded", 'error');
-      }
+      exportToWord({
+        title: activeDoc.title,
+        htmlContent: htmlContent,
+        attachments: activeDoc.attachments,
+      })
+        .then((blob) => {
+          downloadBlob(blob, `${safeTitle}.docx`);
+          addToast('Word document exported successfully', 'success');
+        })
+        .catch((error) => {
+          console.error('Word export error:', error);
+          addToast(`Word export failed: ${error.message}`, 'error');
+        });
       return;
     } 
     
@@ -496,7 +400,6 @@ function App() {
   const closeSettings = useCallback(() => setIsSettingsOpen(false), []);
   const openHelp = useCallback(() => setIsHelpOpen(true), []);
   const closeHelp = useCallback(() => setIsHelpOpen(false), []);
-  const closePrintModal = useCallback(() => setIsPrintModalOpen(false), []);
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-notion-bg text-gray-900 dark:text-notion-text overflow-hidden transition-colors duration-200">
@@ -572,16 +475,6 @@ function App() {
         onClose={closeSettings} 
         settings={aiSettings}
         onSave={setAiSettings}
-      />
-
-      <PrintPreviewModal 
-        isOpen={isPrintModalOpen}
-        onClose={closePrintModal}
-        content={activeDoc.content}
-        theme={theme}
-        onPrint={handlePrint}
-        documentTitle={activeDoc.title}
-        attachments={activeDoc.attachments}
       />
 
       <HelpModal 

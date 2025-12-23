@@ -171,9 +171,9 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                     tips={["Compatible with MS Word, Google Docs", "Basic formatting preserved"]}
                   />
                   <ExportCard 
-                    title="PDF (Print)" 
-                    description="Export as PDF via print dialog or direct download."
-                    tips={["Use Page Break to control pagination", "Customize page size, margins, and orientation"]}
+                    title="Print / PDF" 
+                    description="Use browser print dialog to save as PDF."
+                    tips={["Press Ctrl+P or use the toolbar button", "Select 'Save as PDF' in print dialog"]}
                   />
                 </div>
               </div>
